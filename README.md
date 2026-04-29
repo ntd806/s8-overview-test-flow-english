@@ -1,4 +1,4 @@
-Copy file này thành `check_ports.sh`:
+Copy this file as `check_ports.sh`:
 
 ```bash
 #!/usr/bin/env bash
@@ -82,14 +82,14 @@ check_port "xocdia"         "ws"     22444
 check_port "xocdia"         "wss"    22446
 ```
 
-Chạy:
+Run:
 
 ```bash
 chmod +x check_ports.sh
 ./check_ports.sh
 ```
 
-Đổi IP hoặc timeout khi cần:
+Change the IP or timeout if needed:
 
 ```bash
 HOST=43.207.3.134 TIMEOUT=2 ./check_ports.sh

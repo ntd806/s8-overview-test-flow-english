@@ -1,21 +1,21 @@
-# Hướng dẫn chạy `player_test_flow-v1.sh`
+# How to Run `player_test_flow-v1.sh`
 
-File này mô tả đúng luồng hiện tại của script [player_test_flow-v1.sh](/Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/player_test_flow-v1.sh).
+This file describes the current flow of the script [player_test_flow-v1.sh](/Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/player_test_flow-v1.sh).
 
-## 1. Mục tiêu
+## 1. Goal
 
-Script dùng để test flow v1 của Portal:
+This script is used to test the Portal v1 flow:
 
 ```text
-Lấy captcha
-Register user mới
+Get captcha
+Register a new user
 Login
-Nếu chưa có nickname thì set nickname
-Lấy sessionKey
-Lấy config game
+Set nickname if the user does not have one yet
+Get sessionKey
+Get game config
 ```
 
-Kết quả cuối cùng cần lấy được:
+The final values you need are:
 
 ```text
 USERNAME
@@ -24,25 +24,25 @@ NICKNAME
 SESSIONKEY
 ```
 
-Sau đó dùng `NICKNAME + SESSIONKEY` để login vào game socket.
+Then use `NICKNAME + SESSIONKEY` to log in to the game socket.
 
-## 2. Điều kiện trước khi chạy
+## 2. Requirements Before Running
 
-Cần bảo đảm Portal v1 đang chạy ở:
+Make sure Portal v1 is running at:
 
 ```text
 http://127.0.0.1:8081/api
 ```
 
-Test nhanh:
+Quick check:
 
 ```bash
 curl -s 'http://127.0.0.1:8081/api?c=124'
 ```
 
-Nếu trả về JSON có `id` và `img` thì Portal đang chạy đúng.
+If the JSON response contains `id` and `img`, Portal is running correctly.
 
-## 3. Cấp quyền và chạy script
+## 3. Grant Permission and Run the Script
 
 ```bash
 chmod +x /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/player_test_flow-v1.sh
@@ -50,19 +50,19 @@ cd /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend
 ./player_test_flow-v1.sh
 ```
 
-## 4. Script đang tự sinh dữ liệu như thế nào
+## 4. How the Script Generates Test Data
 
-Script hiện tại không cần sửa tay đầu file trong hầu hết trường hợp.
+In most cases, you do not need to edit the top of the file manually.
 
-Nó tự sinh:
+It auto-generates:
 
 ```text
-USERNAME = test + 7 số cuối của timestamp
+USERNAME = test + last 7 digits of the timestamp
 PASSWORD = 123456
-NICKNAME = play_ + 7 số cuối của timestamp
+NICKNAME = play_ + last 7 digits of the timestamp
 ```
 
-Ví dụ:
+Example:
 
 ```text
 USERNAME = test4812184
@@ -70,117 +70,117 @@ PASSWORD = 123456
 NICKNAME = play_4812184
 ```
 
-Giới hạn mà script đang tuân theo:
+Current constraints followed by the script:
 
 ```text
-USERNAME chỉ gồm chữ và số, dài 6-16 ký tự
-NICKNAME gồm chữ, số, dấu _, dài 6-16 ký tự
+USERNAME contains only letters and numbers, length 6-16
+NICKNAME contains letters, numbers, and _, length 6-16
 ```
 
-## 5. Luồng chạy thực tế
+## 5. Actual Runtime Flow
 
-### Bước 1: Lấy captcha
+### Step 1: Get captcha
 
-Script gọi:
+The script calls:
 
 ```bash
 curl -s 'http://127.0.0.1:8081/api?c=124'
 ```
 
-Sau đó:
+Then it:
 
 ```text
-Lưu ảnh vào captcha.png
-Mở ảnh captcha.png
-Yêu cầu nhập 3 ký tự captcha
+Saves the image as captcha.png
+Opens captcha.png
+Prompts you to enter the 3-character captcha
 ```
 
-### Bước 2: Register
+### Step 2: Register
 
-Script gọi:
+The script calls:
 
 ```bash
 curl -s "http://127.0.0.1:8081/api?c=1&un=$USERNAME&pw=$PASSWORD&cp=$CAPTCHA&cid=$CID"
 ```
 
-Kết quả thường gặp:
+Common outcomes:
 
 ```text
-errorCode = 0     -> register thành công
-errorCode = 1006  -> user đã tồn tại, script vẫn cho đi tiếp login
-errorCode = 115   -> captcha sai
-errorCode = 101   -> username không hợp lệ
+errorCode = 0     -> registration succeeded
+errorCode = 1006  -> user already exists, the script still continues to login
+errorCode = 115   -> wrong captcha
+errorCode = 101   -> invalid username
 ```
 
-### Bước 3: Login
+### Step 3: Login
 
-Script gọi:
+The script calls:
 
 ```bash
 curl -s "http://127.0.0.1:8081/api?c=3&un=$USERNAME&pw=$PASSWORD"
 ```
 
-Các nhánh script đang xử lý:
+Branches handled by the script:
 
 ```text
-success = true + có sessionKey -> login thành công
-errorCode = 2001               -> user chưa có nickname, chuyển sang bước set nickname
-errorCode = 1001               -> script thử login lại bằng mật khẩu MD5
+success = true + sessionKey exists -> login succeeded
+errorCode = 2001                   -> user has no nickname yet, continue to set nickname
+errorCode = 1001                   -> script retries login with MD5 password
 ```
 
-Nếu login plain password bị `1001`, script sẽ tự thử:
+If plain-password login returns `1001`, the script will try:
 
 ```bash
 pw=MD5(123456)
 ```
 
-Nếu login bằng MD5 vẫn lỗi, script sẽ dừng.
+If MD5 login still fails, the script stops.
 
-### Bước 4: Set nickname nếu chưa có nickname
+### Step 4: Set nickname if missing
 
-Khi login trả `2001`, script gọi:
+When login returns `2001`, the script calls:
 
 ```bash
 curl -s "http://127.0.0.1:8081/api?c=5&un=$USERNAME&pw=$LOGIN_PASSWORD&nn=$NICKNAME"
 ```
 
-Các nhánh script đang xử lý:
+Branches handled by the script:
 
 ```text
-success = true + có sessionKey -> thành công
-errorCode = 106                -> nickname không hợp lệ, script tự rút ngắn nickname và thử lại
-errorCode = 1013               -> nickname đã tồn tại, script login lại để lấy sessionKey
+success = true + sessionKey exists -> success
+errorCode = 106                    -> invalid nickname, the script shortens the nickname and retries
+errorCode = 1013                   -> nickname already exists, the script logs in again to get sessionKey
 ```
 
-Nickname fallback khi gặp `106`:
+Fallback nickname when `106` happens:
 
 ```text
-p + 7 số cuối của timestamp
+p + last 7 digits of the timestamp
 ```
 
-Ví dụ:
+Example:
 
 ```text
 p4812184
 ```
 
-### Bước 5: Lấy config game
+### Step 5: Get game config
 
-Script gọi:
+The script calls:
 
 ```bash
 curl -s 'http://127.0.0.1:8081/api?c=6&v=1&pf=web&did=test&vnt='
 ```
 
-Mục đích:
+Purpose:
 
 ```text
-Xem game đang public host/port nào
+See which host/port each game is published on
 ```
 
-### Bước 6: In kết quả cuối
+### Step 6: Print the final result
 
-Script in ra:
+The script prints:
 
 ```text
 USERNAME
@@ -189,107 +189,107 @@ NICKNAME
 SESSIONKEY
 ```
 
-## 6. Cách đọc kết quả đúng
+## 6. How to Read the Result Correctly
 
-### Trường hợp chuẩn
+### Typical case
 
 ```text
 STEP 2 register -> errorCode 0
 STEP 3 login    -> errorCode 2001
 STEP 4 set nick -> errorCode 0
-FINAL RESULT    -> có SESSIONKEY
+FINAL RESULT    -> SESSIONKEY exists
 ```
 
-Hoặc:
+Or:
 
 ```text
 STEP 2 register -> errorCode 1006
 STEP 3 login    -> success true
-FINAL RESULT    -> có SESSIONKEY
+FINAL RESULT    -> SESSIONKEY exists
 ```
 
-## 7. Các lỗi hay gặp
+## 7. Common Errors
 
 ### `115`
 
-Captcha sai.
+Wrong captcha.
 
-Cách xử lý:
+How to handle it:
 
 ```text
-Chạy lại script
-Nhập đúng 3 ký tự captcha mới
+Run the script again
+Enter the new 3-character captcha correctly
 ```
 
 ### `101`
 
-Username không hợp lệ.
+Invalid username.
 
-Hiện tại script đã tự sinh username đúng chuẩn. Nếu vẫn gặp lỗi này thì thường là do bạn đã override biến môi trường `USERNAME` bằng giá trị không hợp lệ.
+The script currently auto-generates a valid username. If you still get this error, it usually means you overrode the `USERNAME` environment variable with an invalid value.
 
-Test lại bằng cách không truyền `USERNAME` custom.
+Test again without passing a custom `USERNAME`.
 
 ### `2001`
 
-User chưa có nickname.
+User has no nickname yet.
 
-Đây là trạng thái bình thường sau khi vừa register thành công.
+This is a normal state right after successful registration.
 
-Script sẽ tự chuyển sang bước set nickname.
+The script will automatically move to the set-nickname step.
 
 ### `106`
 
-Nickname không hợp lệ.
+Invalid nickname.
 
-Script hiện tại đã có nhánh retry nickname ngắn hơn.
+The current script already includes a retry branch with a shorter nickname.
 
-Nếu vẫn gặp lại, thường là do bạn truyền `NICKNAME` custom quá dài hoặc sai pattern.
+If it still happens, it is usually because you passed a custom `NICKNAME` that is too long or does not match the expected pattern.
 
 ### `1013`
 
-Nickname đã tồn tại.
+Nickname already exists.
 
-Script sẽ thử login lại để lấy `sessionKey`.
+The script will try to log in again to get `sessionKey`.
 
 ### `1001`
 
-Login lỗi.
+Login error.
 
-Script sẽ thử lại bằng password MD5.
+The script will retry with the MD5 password.
 
-Nếu vẫn fail thì thường là local procedure hoặc dữ liệu local đang lệch.
+If it still fails, the local procedure or local data is usually out of sync.
 
 ### `1005`
 
-User không tồn tại hoặc Portal đang đọc sai trạng thái dữ liệu hiện tại.
+The user does not exist, or Portal is reading the current data state incorrectly.
 
-Với flow local mới, lỗi này không nên xuất hiện ở user vừa register thành công.
+With the new local flow, this error should not appear for a user that just registered successfully.
 
-## 8. Cách dùng kết quả để vào game
+## 8. How to Use the Result to Enter the Game
 
-Sau khi script chạy xong, lấy:
+After the script finishes, take:
 
 ```text
 NICKNAME
 SESSIONKEY
 ```
 
-Ví dụ game Bacay:
+Example Bacay game:
 
 ```text
 ws://127.0.0.1:21044
 ```
 
-Dùng:
+Use:
 
 ```text
-nickname = giá trị NICKNAME ở cuối script
-sessionKey = giá trị SESSIONKEY ở cuối script
+nickname = the NICKNAME value printed at the end of the script
+sessionKey = the SESSIONKEY value printed at the end of the script
 ```
 
-## 9. Ghi chú quan trọng
+## 9. Important Note
 
-Script này đang bám theo Portal v1 cũ:
+This script follows the legacy Portal v1 flow:
 
 ```text
 c=124 -> captcha
@@ -299,4 +299,4 @@ c=5   -> set nickname
 c=6   -> get config
 ```
 
-File này chỉ mô tả đúng luồng của `player_test_flow-v1.sh`, không mô tả flow v2.
+This file only describes the current flow of `player_test_flow-v1.sh`. It does not describe the v2 flow.

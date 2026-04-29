@@ -1,22 +1,22 @@
-# Hướng dẫn chạy `test_v2_full_flow.sh`
+# How to Run `test_v2_full_flow.sh`
 
-File này mô tả đúng luồng hiện tại của script [test_v2_full_flow.sh](/Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/test_v2_full_flow.sh).
+This file describes the current flow of the script [test_v2_full_flow.sh](/Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/test_v2_full_flow.sh).
 
-## 1. Mục tiêu
+## 1. Goal
 
-Script dùng để test full flow API v2 của Portal:
+This script is used to test the full Portal API v2 flow:
 
 ```text
-Lấy access token
-Tạo account
-Kiểm tra balance
+Get access token
+Create account
+Check balance
 Deposit
 Launch game
 Withdraw
-Kiểm tra balance cuối
+Check final balance
 ```
 
-Kết quả cuối cùng mong muốn:
+Expected final result:
 
 ```text
 FULL FLOW PASSED
@@ -24,21 +24,21 @@ USER = ...
 FINAL_BALANCE = DEPOSIT_AMOUNT - WITHDRAW_AMOUNT
 ```
 
-## 2. Điều kiện trước khi chạy
+## 2. Requirements Before Running
 
-Cần bảo đảm Portal v2 đang chạy ở:
+Make sure Portal v2 is running at:
 
 ```text
 http://127.0.0.1:8081
 ```
 
-Và endpoint auth v2 hoạt động:
+And make sure the v2 auth endpoint works:
 
 ```text
 POST /api/v2/4001
 ```
 
-## 3. Chạy script
+## 3. Run the Script
 
 ```bash
 chmod +x /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/test_v2_full_flow.sh
@@ -46,11 +46,11 @@ cd /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend
 ./test_v2_full_flow.sh
 ```
 
-## 4. Các biến cấu hình script đang dùng
+## 4. Script Configuration Variables
 
-Script hỗ trợ override bằng biến môi trường.
+The script supports overrides through environment variables.
 
-Giá trị mặc định hiện tại:
+Current default values:
 
 ```text
 BASE            = http://127.0.0.1:8081
@@ -63,7 +63,7 @@ DEPOSIT_AMOUNT  = 10000
 WITHDRAW_AMOUNT = 3000
 ```
 
-User test được sinh tự động:
+The test user is generated automatically:
 
 ```text
 USER = curlv2_<timestamp>
@@ -71,7 +71,7 @@ TXN = txn_<USER>
 WITHDRAW_TXN = txn_<USER>_w
 ```
 
-Ví dụ chạy custom:
+Example custom run:
 
 ```bash
 BASE=http://127.0.0.1:8081 \
@@ -84,17 +84,17 @@ WITHDRAW_AMOUNT=5000 \
 ./test_v2_full_flow.sh
 ```
 
-## 5. Luồng chạy thực tế
+## 5. Actual Runtime Flow
 
-### Bước 1: Get access token
+### Step 1: Get access token
 
-Script gọi:
+The script calls:
 
 ```text
 POST /api/v2/4001
 ```
 
-Body gửi lên:
+Request body:
 
 ```json
 {
@@ -105,20 +105,20 @@ Body gửi lên:
 }
 ```
 
-`signature` được tạo bằng:
+`signature` is generated with:
 
 ```text
 HMAC-SHA256(secret, operatorCode + apiKey + timestamp)
 ```
 
-Script sẽ dừng nếu:
+The script stops if:
 
 ```text
 success != true
-hoặc không extract được accessToken
+or accessToken cannot be extracted
 ```
 
-Kết quả mong đợi:
+Expected response:
 
 ```json
 {
@@ -131,9 +131,9 @@ Kết quả mong đợi:
 }
 ```
 
-### Bước 2: Create account
+### Step 2: Create account
 
-Script gọi:
+The script calls:
 
 ```text
 POST /api/v2/4011
@@ -150,16 +150,16 @@ Body:
 }
 ```
 
-Kết quả mong đợi:
+Expected result:
 
 ```text
 success = true
 errorCode = 0
 ```
 
-### Bước 3: Check balance
+### Step 3: Check balance
 
-Script gọi:
+The script calls:
 
 ```text
 POST /api/v2/4012
@@ -175,15 +175,15 @@ Body:
 }
 ```
 
-Kết quả mong đợi ban đầu thường là:
+The initial expected result is usually:
 
 ```text
 balance = 0
 ```
 
-### Bước 4: Deposit
+### Step 4: Deposit
 
-Script gọi:
+The script calls:
 
 ```text
 POST /api/v2/4021
@@ -203,15 +203,15 @@ Body:
 }
 ```
 
-Kết quả mong đợi:
+Expected result:
 
 ```text
 success = true
 ```
 
-### Bước 5: Launch game
+### Step 5: Launch game
 
-Script gọi:
+The script calls:
 
 ```text
 POST /api/v2/4031
@@ -229,7 +229,7 @@ Body:
 }
 ```
 
-Kết quả mong đợi:
+Expected response:
 
 ```json
 {
@@ -241,9 +241,9 @@ Kết quả mong đợi:
 }
 ```
 
-### Bước 6: Withdraw
+### Step 6: Withdraw
 
-Script gọi:
+The script calls:
 
 ```text
 POST /api/v2/4021
@@ -263,37 +263,37 @@ Body:
 }
 ```
 
-Kết quả mong đợi:
+Expected result:
 
 ```text
 success = true
 ```
 
-### Bước 7: Final balance
+### Step 7: Final balance
 
-Script gọi lại:
+The script calls again:
 
 ```text
 POST /api/v2/4012
 Authorization: Bearer <accessToken>
 ```
 
-Sau đó script tự so:
+Then it compares:
 
 ```text
 EXPECTED_BALANCE = DEPOSIT_AMOUNT - WITHDRAW_AMOUNT
-ACTUAL_BALANCE   = balance từ response cuối
+ACTUAL_BALANCE   = balance from the final response
 ```
 
-Nếu lệch, script dừng với:
+If they do not match, the script stops with:
 
 ```text
 Balance mismatch
 ```
 
-## 6. Kết quả cuối đúng
+## 6. Correct Final Result
 
-Khi pass toàn bộ, script in:
+When the whole flow passes, the script prints:
 
 ```text
 ✅ FULL FLOW PASSED
@@ -301,120 +301,120 @@ USER: curlv2_<timestamp>
 FINAL_BALANCE: 7000
 ```
 
-Với mặc định hiện tại:
+With the current defaults:
 
 ```text
 10000 - 3000 = 7000
 ```
 
-## 7. Các lỗi hay gặp
+## 7. Common Errors
 
 ### `FAILED at step: Get access token`
 
-Nguyên nhân thường gặp:
+Common causes:
 
 ```text
-Sai OP
-Sai API_KEY
-Sai SECRET
-Portal v2 chưa chạy
-Signature HMAC không đúng
+Wrong OP
+Wrong API_KEY
+Wrong SECRET
+Portal v2 is not running
+Invalid HMAC signature
 ```
 
-Kiểm tra:
+Check:
 
 ```text
-POST /api/v2/4001 có trả success=true không
+Does POST /api/v2/4001 return success=true?
 ```
 
 ### `Cannot extract accessToken`
 
-Nguyên nhân:
+Cause:
 
 ```text
-Response auth không có data.accessToken
-JSON trả về khác format script đang parse
+The auth response has no data.accessToken
+The returned JSON format is different from what the script parses
 ```
 
 ### `FAILED at step: Create account`
 
-Nguyên nhân thường gặp:
+Common causes:
 
 ```text
-JWT Bearer token không hợp lệ
-operatorCode không hợp lệ
-DB tạo account lỗi
+Invalid JWT Bearer token
+Invalid operatorCode
+Database error while creating the account
 ```
 
 ### `FAILED at step: Check balance`
 
-Nguyên nhân thường gặp:
+Common causes:
 
 ```text
-User chưa tạo đúng
-Bearer token không hợp lệ
-Flow multi-tenant hoặc cache lỗi
+The user was not created correctly
+Invalid Bearer token
+Multi-tenant flow or cache issue
 ```
 
 ### `FAILED at step: Deposit`
 
-Nguyên nhân thường gặp:
+Common causes:
 
 ```text
-transactionId bị trùng
-user không tồn tại
-money service lỗi
+Duplicate transactionId
+User does not exist
+Money service error
 ```
 
 ### `FAILED at step: Launch game`
 
-Nguyên nhân thường gặp:
+Common causes:
 
 ```text
-gameId không hợp lệ
-user không tồn tại
-token không hợp lệ
+Invalid gameId
+User does not exist
+Invalid token
 ```
 
 ### `FAILED at step: Withdraw`
 
-Nguyên nhân thường gặp:
+Common causes:
 
 ```text
-Không đủ balance
-transactionId trùng
-user không tồn tại
+Insufficient balance
+Duplicate transactionId
+User does not exist
 ```
 
 ### `Balance mismatch`
 
-Nghĩa là:
+This means:
 
 ```text
-API deposit/withdraw trả success
-nhưng số dư cuối không khớp phép tính mong đợi
+The deposit/withdraw API returned success
+but the final balance does not match the expected calculation
 ```
 
-Cần kiểm tra:
+Check:
 
 ```text
-Response của bước deposit
-Response của bước withdraw
-Response balance cuối
+The response from the deposit step
+The response from the withdraw step
+The final balance response
 ```
 
-## 8. Ghi chú quan trọng
+## 8. Important Notes
 
-Script này:
+This script:
 
 ```text
-chỉ test API v2
-không dùng captcha
-không dùng register/login v1
-không cần set nickname kiểu flow v1
+tests only API v2
+does not use captcha
+does not use v1 register/login
+does not need the v1-style nickname setup flow
 ```
 
-Thứ tự commandId v2 trong script:
+The v2 commandId order used in the script:
 
 ```text
 4001 -> auth token
@@ -424,4 +424,4 @@ Thứ tự commandId v2 trong script:
 4031 -> launch game
 ```
 
-File này chỉ mô tả đúng luồng hiện tại của `test_v2_full_flow.sh`.
+This file only describes the current flow of `test_v2_full_flow.sh`.

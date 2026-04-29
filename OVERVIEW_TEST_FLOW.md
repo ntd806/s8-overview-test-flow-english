@@ -1,72 +1,72 @@
-# Overview tài liệu test
-File này là hướng dẫn tổng quan: nên đọc file nào trước và chạy theo thứ tự nào.
+# Test Overview
+This file is the high-level guide for which documents to read first and which order to run the tests in.
 
-## 1. Mục tiêu
+## 1. Goal
 
-Thứ tự khuyến nghị để test toàn bộ hệ thống:
+Recommended order for testing the whole system:
 
 ```text
-API v1 cũ
-Socket game
+Legacy API v1
+Game socket
 API v2
 ```
 
-Lý do:
+Reason:
 
 ```text
-API v1 cũ giúp tạo user, login và lấy sessionKey
-Socket game cần nickname + sessionKey từ API v1
-API v2 nên test sau khi Portal và game socket đã xác nhận chạy ổn
+Legacy API v1 helps create a user, log in, and get the sessionKey
+The game socket needs nickname + sessionKey from API v1
+API v2 should be tested after Portal and the game socket are confirmed working
 ```
 
-## 2. Thứ tự đọc tài liệu
+## 2. Reading Order
 
-### Bước 1
+### Step 1
 
-Đọc file:
+Read:
 
 [testv1.md]
 
-Mục đích:
+Purpose:
 
 ```text
-Hiểu luồng Portal v1
-Biết cách chạy player_test_flow-v1.sh
-Biết cách lấy USERNAME, NICKNAME, SESSIONKEY
+Understand the Portal v1 flow
+Know how to run player_test_flow-v1.sh
+Know how to get USERNAME, NICKNAME, and SESSIONKEY
 ```
 
-### Bước 2
+### Step 2
 
-Chạy file:
+Run:
 
 ```bash
 cd root/ && ./player_test_flow-v1.sh
 ```
 
-Kết quả cần có:
+Expected result:
 
 ```text
 NICKNAME
 SESSIONKEY
 ```
 
-### Bước 3
+### Step 3
 
-Đọc file:
+Read:
 
 [test_s8_test_socket.md]
 
-Mục đích:
+Purpose:
 
 ```text
-Biết cách dùng NICKNAME + SESSIONKEY
-Biết cách mở s8-test-socket
-Biết cách connect và login vào game socket
+Know how to use NICKNAME + SESSIONKEY
+Know how to open s8-test-socket
+Know how to connect and log in to the game socket
 ```
 
-### Bước 4
+### Step 4
 
-Chạy tool:
+Run the tool:
 
 ```bash
 git clone git@github.com:ntd806/s8-test-socket.git \
@@ -74,83 +74,84 @@ git clone git@github.com:ntd806/s8-test-socket.git \
 && docker compose up -d --build
 ```
 
-Sau đó mở:
+Then open:
 
 ```text
 http://127.0.0.1:3000/
 ```
 
-### Bước 5
+### Step 5
 
-Đọc file:
+Read:
 
 [test_v2_full_flow.md]
-Mục đích:
+
+Purpose:
 
 ```text
-Hiểu flow API v2
-Biết cách chạy test_v2_full_flow.sh
-Biết các bước auth token, create account, balance, deposit, launch, withdraw
+Understand the API v2 flow
+Know how to run test_v2_full_flow.sh
+Know the auth token, create account, balance, deposit, launch, and withdraw steps
 ```
 
-### Bước 6
+### Step 6
 
-Chạy file:
+Run:
 
 ```bash
 cd root && ./test_v2_full_flow.sh
 ```
 
-## 3. Thứ tự chạy khuyến nghị
+## 3. Recommended Execution Order
 
 ```text
-1. Chạy player_test_flow-v1.sh
-2. Lấy NICKNAME + SESSIONKEY
-3. Dùng s8-test-socket để test connect/login game
-4. Chạy test_v2_full_flow.sh
+1. Run player_test_flow-v1.sh
+2. Get NICKNAME + SESSIONKEY
+3. Use s8-test-socket to test game connect/login
+4. Run test_v2_full_flow.sh
 ```
 
-## 4. Nếu chỉ muốn test nhanh
+## 4. If You Only Want a Quick Test
 
-### Chỉ test API v1 cũ
+### Only test legacy API v1
 
-Đọc:
+Read:
 
 [testv1.md]
 
-Chạy:
+Run:
 
 ```bash
 ./player_test_flow-v1.sh
 ```
 
-### Chỉ test socket game
+### Only test the game socket
 
-Đọc:
+Read:
 
 [test_s8_test_socket.md]
 
-Điều kiện:
+Requirement:
 
 ```text
-Phải có NICKNAME + SESSIONKEY trước
+You must have NICKNAME + SESSIONKEY first
 ```
 
-### Chỉ test API v2
+### Only test API v2
 
-Đọc:
+Read:
 
 [test_v2_full_flow.md]
 
-Chạy:
+Run:
 
 ```bash
 ./test_v2_full_flow.sh
 ```
 
-## 5. Kết luận ngắn
+## 5. Short Conclusion
 
-Muốn test đúng thứ tự, hãy đi như sau:
+If you want to test in the correct order, follow this path:
 
 ```text
 testv1.md

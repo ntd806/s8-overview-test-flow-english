@@ -1,30 +1,30 @@
-# Hướng dẫn dùng `NICKNAME` + `SESSIONKEY` với `s8-test-socket`
+# How to Use `NICKNAME` + `SESSIONKEY` with `s8-test-socket`
 
-File này hướng dẫn cách lấy `NICKNAME`, `SESSIONKEY` từ Portal v1 rồi dùng chúng để test kết nối game socket trên dự án:
+This file explains how to get `NICKNAME` and `SESSIONKEY` from Portal v1, then use them to test the game socket connection in this project:
 
 [`/Users/anthonynguyen/Downloads/bacay-express-tester/s8-test-socket`](/Users/anthonynguyen/Downloads/bacay-express-tester/s8-test-socket)
 
-## 1. Mục tiêu
+## 1. Goal
 
-Dùng `s8-test-socket` để test trực quan các bước:
+Use `s8-test-socket` to visually test these steps:
 
 ```text
-Mở WebSocket tới game
-Gửi packet login bằng nickname + sessionKey
-Xác nhận login thành công
-Gửi thêm join room / action hex trên cùng socket
+Open a WebSocket connection to the game
+Send a login packet with nickname + sessionKey
+Confirm that login succeeds
+Send extra join-room / action hex packets on the same socket
 ```
 
-## 2. Lấy `NICKNAME` và `SESSIONKEY`
+## 2. Get `NICKNAME` and `SESSIONKEY`
 
-Trước hết chạy:
+First run:
 
 ```bash
 cd /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend
 ./player_test_flow-v1.sh
 ```
 
-Kết quả cuối cần lấy:
+The final values you need are:
 
 ```text
 USERNAME   = ...
@@ -33,18 +33,18 @@ NICKNAME   = ...
 SESSIONKEY = ...
 ```
 
-Ví dụ:
+Example:
 
 ```text
 NICKNAME   = play_4812184
 SESSIONKEY = eyJuaWNrbmFtZSI6InBsYXlfNDgxMjE4NCIs...
 ```
 
-Sau đó dùng chính `NICKNAME` và `SESSIONKEY` này để login game socket.
+Then use that same `NICKNAME` and `SESSIONKEY` to log in to the game socket.
 
-## 3. Chạy `s8-test-socket`
+## 3. Run `s8-test-socket`
 
-Vào thư mục tool:
+Go to the tool directory:
 
 ```bash
 git clone git@github.com:ntd806/s8-test-socket.git \
@@ -52,58 +52,58 @@ git clone git@github.com:ntd806/s8-test-socket.git \
 && docker compose up -d --build
 ```
 
-Mở web:
+Open the web UI:
 
 ```text
 http://127.0.0.1:3000/
 ```
 
-## 4. Luồng test đúng trong web UI
+## 4. Correct Test Flow in the Web UI
 
-Web tester hiện dùng WebSocket binary thật qua path:
+The web tester currently uses a real binary WebSocket on this path:
 
 ```text
 /websocket
 ```
 
-Luồng thao tác chuẩn:
+Standard interaction flow:
 
-1. Chọn game.
-2. Điền `host`.
-3. Điền `port`.
-4. Giữ `WS Path=/websocket`.
-5. Bấm `Kết nối`.
+1. Select a game.
+2. Fill in `host`.
+3. Fill in `port`.
+4. Keep `WS Path=/websocket`.
+5. Click `Connect`.
 6. Paste `SESSIONKEY`.
-7. Nếu ô `Nickname` đang trống, app sẽ tự điền nickname từ payload trong `SESSIONKEY`.
-8. Có thể bấm `Tạo Login Hex`, hoặc để app tự sinh sau khi connect.
-9. Bấm `Login`.
-10. Nếu cần test tiếp, paste `Join Room Hex` hoặc `Action Hex` rồi gửi tiếp trên cùng socket.
+7. If the `Nickname` field is empty, the app auto-fills the nickname from the payload inside `SESSIONKEY`.
+8. You can click `Generate Login Hex`, or let the app generate it automatically after connect.
+9. Click `Login`.
+10. If you want to continue testing, paste `Join Room Hex` or `Action Hex` and send it on the same socket.
 
-## 5. Dùng `SESSIONKEY` như thế nào
+## 5. How to Use `SESSIONKEY`
 
-Trong UI của `s8-test-socket`:
-
-```text
-Ô Session Key -> dán SESSIONKEY từ player_test_flow-v1.sh
-Ô Nickname    -> dán NICKNAME nếu muốn, hoặc để trống để app tự fill từ SESSIONKEY
-```
-
-Tool hiện có logic:
+In the `s8-test-socket` UI:
 
 ```text
-Nếu nickname đang trống và sessionKey decode được payload.nickname
-thì app tự điền nickname
+Session Key field -> paste the SESSIONKEY from player_test_flow-v1.sh
+Nickname field    -> paste NICKNAME if you want, or leave it empty so the app auto-fills it from SESSIONKEY
 ```
 
-Vì vậy cách an toàn nhất là:
+The tool currently has this logic:
 
 ```text
-Dán cả SESSIONKEY và NICKNAME
+If nickname is empty and sessionKey can decode payload.nickname
+the app auto-fills the nickname
 ```
 
-## 6. Login Hex tool tự sinh là gì
+So the safest approach is:
 
-Web tester đang tự tạo frame login BitZero WebSocket theo dạng:
+```text
+Paste both SESSIONKEY and NICKNAME
+```
+
+## 6. What Is the Auto-Generated Login Hex?
+
+The web tester auto-builds a BitZero WebSocket login frame in this format:
 
 ```text
 00 00 00
@@ -114,22 +114,22 @@ Web tester đang tự tạo frame login BitZero WebSocket theo dạng:
 <sessionKey string>
 ```
 
-Ý nghĩa:
+Meaning:
 
 ```text
-00 00 00 -> prefix WS mà BitZero WebSocketCodec bỏ qua
+00 00 00 -> WS prefix ignored by BitZero WebSocketCodec
 01       -> controller id
-00 01    -> request id login
-00 01    -> dataCmd id login
-nickname -> string có prefix length 2 byte
-sessionKey -> string có prefix length 2 byte
+00 01    -> login request id
+00 01    -> login dataCmd id
+nickname -> string with a 2-byte length prefix
+sessionKey -> string with a 2-byte length prefix
 ```
 
-Thông thường bạn không cần tự build tay vì app đã tự sinh `Login Hex`.
+Normally you do not need to build it manually because the app already generates `Login Hex`.
 
-## 7. Port game local để test WS
+## 7. Local Game Ports for WS Testing
 
-Các port WS local hiện tại:
+Current local WS ports:
 
 ```text
 Bacay       -> 21044
@@ -150,13 +150,13 @@ minigame    -> 22344
 xocdia      -> 22444
 ```
 
-Host local thường là:
+The local host is usually:
 
 ```text
 127.0.0.1
 ```
 
-Ví dụ test Bacay:
+Example for testing Bacay:
 
 ```text
 Host    = 127.0.0.1
@@ -165,27 +165,27 @@ WS Path = /websocket
 URL     = ws://127.0.0.1:21044/websocket
 ```
 
-## 8. Ví dụ test nhanh với Bacay
+## 8. Quick Bacay Test Example
 
-### Bước 1
+### Step 1
 
-Lấy `NICKNAME` và `SESSIONKEY` từ:
+Get `NICKNAME` and `SESSIONKEY` from:
 
 ```bash
 ./player_test_flow-v1.sh
 ```
 
-### Bước 2
+### Step 2
 
-Mở:
+Open:
 
 ```text
 http://127.0.0.1:3000/
 ```
 
-### Bước 3
+### Step 3
 
-Chọn:
+Select:
 
 ```text
 Game    = Bacay
@@ -194,50 +194,50 @@ Port    = 21044
 Path    = /websocket
 ```
 
-### Bước 4
+### Step 4
 
-Bấm:
+Click:
 
 ```text
-Kết nối
+Connect
 ```
 
-Kết quả mong đợi:
+Expected result:
 
 ```text
 WebSocket opened
-hoặc summary báo đã kết nối tới ws://127.0.0.1:21044/websocket
+or the summary says it connected to ws://127.0.0.1:21044/websocket
 ```
 
-### Bước 5
+### Step 5
 
-Dán:
+Paste:
 
 ```text
 Session Key = <SESSIONKEY>
 Nickname    = <NICKNAME>
 ```
 
-### Bước 6
+### Step 6
 
-Bấm:
+Click:
 
 ```text
-Tạo Login Hex
+Generate Login Hex
 Login
 ```
 
-Kết quả mong đợi:
+Expected result:
 
 ```text
-Có response binary trả về
-Không timeout
-Không bị socket close ngay sau login
+Binary response is returned
+No timeout
+The socket is not closed immediately after login
 ```
 
-## 9. Sau login thì test gì tiếp
+## 9. What to Test After Login
 
-Sau khi login socket thành công, bạn có thể test tiếp:
+After the socket login succeeds, you can continue testing:
 
 ```text
 Join Room Hex
@@ -246,73 +246,73 @@ Reconnect flow
 Leave room
 ```
 
-Các packet này phải gửi trên cùng socket đã login.
+These packets must be sent on the same logged-in socket.
 
-## 10. Dấu hiệu pass cơ bản
+## 10. Basic Pass Criteria
 
-Một game được xem là pass mức tối thiểu khi:
-
-```text
-Connect WS thành công
-Login packet gửi đi thành công
-Có response từ server
-Socket không bị đóng ngay
-Có thể gửi thêm packet join room hoặc action
-```
-
-## 11. Lỗi hay gặp
-
-### Không connect được
-
-Kiểm tra:
+A game is considered minimally passing when:
 
 ```text
-Game container đã chạy chưa
-Port WS đúng chưa
-Host đúng chưa
-WS Path có phải /websocket không
+WS connect succeeds
+The login packet is sent successfully
+There is a response from the server
+The socket is not closed immediately
+You can send additional join-room or action packets
 ```
 
-### Connect được nhưng login fail
+## 11. Common Issues
 
-Kiểm tra:
+### Cannot connect
+
+Check:
 
 ```text
-SESSIONKEY có phải mới lấy từ Portal không
-NICKNAME có đúng user của SESSIONKEY không
-Game đó có đúng WS port không
-Login Hex có đúng controller/request/dataCmd không
+Is the game container running?
+Is the WS port correct?
+Is the host correct?
+Is the WS path really /websocket?
 ```
 
-### App báo thiếu cấu hình WS
+### Connect works but login fails
 
-Ý nghĩa:
+Check:
 
 ```text
-Game đó chưa có <GAME>_WS_PORT hoặc <GAME>_WSS_PORT trong .env của s8-test-socket
+Was SESSIONKEY just retrieved from Portal?
+Does NICKNAME belong to the SESSIONKEY user?
+Is that the correct WS port for the game?
+Are controller/request/dataCmd correct in the Login Hex?
 ```
 
-Browser tester không dùng `GAME_PORT` TCP để mở WebSocket.
+### The app says WS config is missing
 
-### Timeout sau khi gửi login
-
-Kiểm tra:
+Meaning:
 
 ```text
-Packet login đã đúng format chưa
-SESSIONKEY còn hiệu lực không
-Socket server có đang nhận đúng path /websocket không
+That game does not have <GAME>_WS_PORT or <GAME>_WSS_PORT in the s8-test-socket .env
 ```
 
-## 12. Ghi chú quan trọng
+The browser tester does not use `GAME_PORT` TCP to open WebSocket.
 
-`s8-test-socket` đang test theo hướng WebSocket binary thật, không phải REST API.
+### Timeout after sending login
 
-Vì vậy:
+Check:
 
 ```text
-Portal dùng để lấy session
-Socket game dùng để connect/login/join/action
+Is the login packet in the correct format?
+Is SESSIONKEY still valid?
+Is the socket server receiving the correct path /websocket?
 ```
 
-`SESSIONKEY` lấy từ Portal v1 hiện là dữ liệu quan trọng nhất để vào game socket ở tool này.
+## 12. Important Notes
+
+`s8-test-socket` is testing a real binary WebSocket flow, not a REST API.
+
+So:
+
+```text
+Portal is used to get the session
+The game socket is used to connect/login/join/action
+```
+
+The `SESSIONKEY` from Portal v1 is currently the most important piece of data for entering the game socket in this tool.
