@@ -122,7 +122,7 @@ Read:
 Run:
 
 ```bash
-./player_test_flow-v1.sh
+cd root/ && ./player_test_flow-v1.sh
 ```
 
 ### Only test the game socket
@@ -146,7 +146,7 @@ Read:
 Run:
 
 ```bash
-./test_v2_full_flow.sh
+cd root/ && ./test_v2_full_flow.sh
 ```
 
 ## 5. Short Conclusion

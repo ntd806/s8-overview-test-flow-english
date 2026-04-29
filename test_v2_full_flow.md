@@ -1,6 +1,6 @@
 # How to Run `test_v2_full_flow.sh`
 
-This file describes the current flow of the script [test_v2_full_flow.sh](/Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/test_v2_full_flow.sh).
+This file describes the current flow of the script [test_v2_full_flow.sh].
 
 ## 1. Goal
 
@@ -41,9 +41,7 @@ POST /api/v2/4001
 ## 3. Run the Script
 
 ```bash
-chmod +x /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/test_v2_full_flow.sh
-cd /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend
-./test_v2_full_flow.sh
+cd /root/ && chmod +x test_v2_full_flow.sh && ./test_v2_full_flow.sh
 ```
 
 ## 4. Script Configuration Variables

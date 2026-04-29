@@ -2,7 +2,10 @@
 
 This file explains how to get `NICKNAME` and `SESSIONKEY` from Portal v1, then use them to test the game socket connection in this project:
 
-[`/Users/anthonynguyen/Downloads/bacay-express-tester/s8-test-socket`](/Users/anthonynguyen/Downloads/bacay-express-tester/s8-test-socket)
+Clone
+git clone git@github.com:ntd806/s8-test-socket.git \
+&& cd s8-test-socket \
+&& docker compose up -d --build
 
 ## 1. Goal
 
@@ -20,8 +23,7 @@ Send extra join-room / action hex packets on the same socket
 First run:
 
 ```bash
-cd /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend
-./player_test_flow-v1.sh
+cd /root/ && ./player_test_flow-v1.sh
 ```
 
 The final values you need are:

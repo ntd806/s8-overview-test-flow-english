@@ -1,6 +1,6 @@
 # How to Run `player_test_flow-v1.sh`
 
-This file describes the current flow of the script [player_test_flow-v1.sh](/Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/player_test_flow-v1.sh).
+This file describes the current flow of the script [player_test_flow-v1.sh]
 
 ## 1. Goal
 
@@ -45,9 +45,7 @@ If the JSON response contains `id` and `img`, Portal is running correctly.
 ## 3. Grant Permission and Run the Script
 
 ```bash
-chmod +x /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend/player_test_flow-v1.sh
-cd /Users/anthonynguyen/Downloads/ProjectsS8/winall_svn/s8-backend
-./player_test_flow-v1.sh
+cd /root/ && chmod +x player_test_flow-v1.sh && ./player_test_flow-v1.sh
 ```
 
 ## 4. How the Script Generates Test Data
