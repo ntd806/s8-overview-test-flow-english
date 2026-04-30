@@ -1,38 +1,40 @@
-# How to Use `NICKNAME` + `SESSIONKEY` with `s8-test-socket`
+````md
+# How to Use `NICKNAME` + `SESSIONKEY` with s8-test-socket
 
-This file explains how to get `NICKNAME` and `SESSIONKEY` from Portal v1, then use them to test the game socket connection in this project:
+This guide explains how to use `NICKNAME` and `SESSIONKEY` from Portal v1  
+to test the game WebSocket connection using `s8-test-socket`.
 
-Clone
-git clone git@github.com:ntd806/s8-test-socket.git \
-&& cd s8-test-socket \
-&& docker compose up -d --build
+---
 
 ## 1. Goal
 
-Use `s8-test-socket` to visually test these steps:
+Use `s8-test-socket` to test:
 
 ```text
-Open a WebSocket connection to the game
-Send a login packet with nickname + sessionKey
-Confirm that login succeeds
-Send extra join-room / action hex packets on the same socket
-```
+Connect to game WebSocket
+Send login packet (nickname + sessionKey)
+Verify login success
+Send additional actions (join room, gameplay, etc.)
+````
 
-## 2. Get `NICKNAME` and `SESSIONKEY`
+---
 
-First run:
+## 2. Get NICKNAME and SESSIONKEY
+
+Run the v1 script:
 
 ```bash
-cd /root/ && ./player_test_flow-v1.sh
+chmod +x ./player_test_flow-v1.sh
+./player_test_flow-v1.sh
 ```
 
-The final values you need are:
+You will get:
 
 ```text
-USERNAME   = ...
-PASSWORD   = 123456
-NICKNAME   = ...
-SESSIONKEY = ...
+USERNAME
+PASSWORD
+NICKNAME
+SESSIONKEY
 ```
 
 Example:
@@ -42,11 +44,11 @@ NICKNAME   = play_4812184
 SESSIONKEY = eyJuaWNrbmFtZSI6InBsYXlfNDgxMjE4NCIs...
 ```
 
-Then use that same `NICKNAME` and `SESSIONKEY` to log in to the game socket.
+---
 
-## 3. Run `s8-test-socket`
+## 3. Run s8-test-socket
 
-Go to the tool directory:
+Clone and run:
 
 ```bash
 git clone git@github.com:ntd806/s8-test-socket.git \
@@ -54,267 +56,191 @@ git clone git@github.com:ntd806/s8-test-socket.git \
 && docker compose up -d --build
 ```
 
-Open the web UI:
+Open the UI:
 
 ```text
 http://127.0.0.1:3000/
 ```
 
-## 4. Correct Test Flow in the Web UI
+---
 
-The web tester currently uses a real binary WebSocket on this path:
-
-```text
-/websocket
-```
-
-Standard interaction flow:
-
-1. Select a game.
-2. Fill in `host`.
-3. Fill in `port`.
-4. Keep `WS Path=/websocket`.
-5. Click `Connect`.
-6. Paste `SESSIONKEY`.
-7. If the `Nickname` field is empty, the app auto-fills the nickname from the payload inside `SESSIONKEY`.
-8. You can click `Generate Login Hex`, or let the app generate it automatically after connect.
-9. Click `Login`.
-10. If you want to continue testing, paste `Join Room Hex` or `Action Hex` and send it on the same socket.
-
-## 5. How to Use `SESSIONKEY`
-
-In the `s8-test-socket` UI:
+## 4. Web UI Test Flow
 
 ```text
-Session Key field -> paste the SESSIONKEY from player_test_flow-v1.sh
-Nickname field    -> paste NICKNAME if you want, or leave it empty so the app auto-fills it from SESSIONKEY
+1. Select a game
+2. Input host
+3. Input port
+4. Set WS Path = /websocket
+5. Click Connect
+6. Paste SESSIONKEY
+7. Fill NICKNAME (or auto-fill)
+8. Generate Login Hex
+9. Click Login
+10. Send additional packets if needed
 ```
 
-The tool currently has this logic:
+---
+
+## 5. Using SESSIONKEY
+
+In the UI:
 
 ```text
-If nickname is empty and sessionKey can decode payload.nickname
-the app auto-fills the nickname
+Session Key → paste SESSIONKEY
+Nickname    → paste NICKNAME (recommended)
 ```
 
-So the safest approach is:
+Auto behavior:
 
 ```text
-Paste both SESSIONKEY and NICKNAME
+If nickname is empty → system tries to decode from SESSIONKEY
 ```
 
-## 6. What Is the Auto-Generated Login Hex?
+---
 
-The web tester auto-builds a BitZero WebSocket login frame in this format:
+## 6. Login Hex Format (Auto-generated)
 
 ```text
 00 00 00
 01
 00 01
 00 01
-<nickname string>
-<sessionKey string>
+<nickname>
+<sessionKey>
 ```
 
 Meaning:
 
 ```text
-00 00 00 -> WS prefix ignored by BitZero WebSocketCodec
-01       -> controller id
-00 01    -> login request id
-00 01    -> login dataCmd id
-nickname -> string with a 2-byte length prefix
-sessionKey -> string with a 2-byte length prefix
+controller id
+request id
+data command
+nickname string
+sessionKey string
 ```
 
-Normally you do not need to build it manually because the app already generates `Login Hex`.
+👉 No need to build manually (tool handles it)
 
-## 7. Local Game Ports for WS Testing
+---
 
-Current local WS ports:
+## 7. Local WebSocket Ports
 
 ```text
-Bacay       -> 21044
-Baicao      -> 21144
-BanCa       -> 21244
-Binh        -> 21344
-Caro        -> 21444
-Cotuong     -> 22544
-Coup        -> 21544
-Lieng       -> 21644
-Poker       -> 21744
-PokerTour   -> 21844
-Sam         -> 21944
-SlotMachine -> 22044
-Tienlen     -> 22144
-Xizach      -> 22244
-minigame    -> 22344
-xocdia      -> 22444
+Bacay       → 21044
+Baicao      → 21144
+BanCa       → 21244
+Binh        → 21344
+Caro        → 21444
+Coup        → 21544
+Lieng       → 21644
+Poker       → 21744
+Sam         → 21944
+SlotMachine → 22044
+Tienlen     → 22144
+Xizach      → 22244
+minigame    → 22344
+xocdia      → 22444
 ```
 
-The local host is usually:
+Host:
 
 ```text
 127.0.0.1
 ```
 
-Example for testing Bacay:
+Example:
 
 ```text
-Host    = 127.0.0.1
-Port    = 21044
-WS Path = /websocket
-URL     = ws://127.0.0.1:21044/websocket
+ws://127.0.0.1:21044/websocket
 ```
 
-## 8. Quick Bacay Test Example
+---
 
-### Step 1
-
-Get `NICKNAME` and `SESSIONKEY` from:
-
-```bash
-./player_test_flow-v1.sh
-```
-
-### Step 2
-
-Open:
+## 8. Quick Bacay Test
 
 ```text
-http://127.0.0.1:3000/
+Step 1 → Run v1 script
+Step 2 → Open http://127.0.0.1:3000/
+Step 3 → Select Bacay
+Step 4 → Host = 127.0.0.1
+Step 5 → Port = 21044
+Step 6 → Path = /websocket
+Step 7 → Connect
+Step 8 → Paste SESSIONKEY + NICKNAME
+Step 9 → Login
 ```
 
-### Step 3
-
-Select:
+Expected:
 
 ```text
-Game    = Bacay
-Host    = 127.0.0.1
-Port    = 21044
-Path    = /websocket
+WebSocket connected
+Binary response received
+Connection stays open
 ```
 
-### Step 4
+---
 
-Click:
+## 9. After Login
 
-```text
-Connect
-```
-
-Expected result:
+You can test:
 
 ```text
-WebSocket opened
-or the summary says it connected to ws://127.0.0.1:21044/websocket
-```
-
-### Step 5
-
-Paste:
-
-```text
-Session Key = <SESSIONKEY>
-Nickname    = <NICKNAME>
-```
-
-### Step 6
-
-Click:
-
-```text
-Generate Login Hex
-Login
-```
-
-Expected result:
-
-```text
-Binary response is returned
-No timeout
-The socket is not closed immediately after login
-```
-
-## 9. What to Test After Login
-
-After the socket login succeeds, you can continue testing:
-
-```text
-Join Room Hex
-Action Hex
-Reconnect flow
+Join Room
+Gameplay actions
+Reconnect
 Leave room
 ```
 
-These packets must be sent on the same logged-in socket.
+---
 
-## 10. Basic Pass Criteria
-
-A game is considered minimally passing when:
+## 10. Pass Criteria
 
 ```text
-WS connect succeeds
-The login packet is sent successfully
-There is a response from the server
-The socket is not closed immediately
-You can send additional join-room or action packets
+WS connects successfully
+Login packet works
+Server responds
+Connection stays alive
+Further actions work
 ```
+
+---
 
 ## 11. Common Issues
 
 ### Cannot connect
 
-Check:
+* Game container not running
+* Wrong port
+* Wrong host
+* Wrong path
 
-```text
-Is the game container running?
-Is the WS port correct?
-Is the host correct?
-Is the WS path really /websocket?
-```
+---
 
-### Connect works but login fails
+### Login failed
 
-Check:
+* Invalid SESSIONKEY
+* Wrong NICKNAME
+* Wrong port
 
-```text
-Was SESSIONKEY just retrieved from Portal?
-Does NICKNAME belong to the SESSIONKEY user?
-Is that the correct WS port for the game?
-Are controller/request/dataCmd correct in the Login Hex?
-```
+---
 
-### The app says WS config is missing
+### Timeout
 
-Meaning:
+* Invalid login packet
+* Expired sessionKey
+* Wrong WS path
 
-```text
-That game does not have <GAME>_WS_PORT or <GAME>_WSS_PORT in the s8-test-socket .env
-```
-
-The browser tester does not use `GAME_PORT` TCP to open WebSocket.
-
-### Timeout after sending login
-
-Check:
-
-```text
-Is the login packet in the correct format?
-Is SESSIONKEY still valid?
-Is the socket server receiving the correct path /websocket?
-```
+---
 
 ## 12. Important Notes
 
-`s8-test-socket` is testing a real binary WebSocket flow, not a REST API.
-
-So:
-
 ```text
-Portal is used to get the session
-The game socket is used to connect/login/join/action
+Portal → provides sessionKey
+Socket → handles real gameplay connection
 ```
 
-The `SESSIONKEY` from Portal v1 is currently the most important piece of data for entering the game socket in this tool.
+This is a **binary WebSocket**, not REST API.
+
+```
+
+---

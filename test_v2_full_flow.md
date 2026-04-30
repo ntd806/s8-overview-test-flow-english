@@ -1,10 +1,13 @@
+````md
 # How to Run `test_v2_full_flow.sh`
 
-This file describes the current flow of the script [test_v2_full_flow.sh].
+This file describes the flow of the script `test_v2_full_flow.sh`.
+
+---
 
 ## 1. Goal
 
-This script is used to test the full Portal API v2 flow:
+This script tests the full Portal API v2 flow:
 
 ```text
 Get access token
@@ -14,7 +17,7 @@ Deposit
 Launch game
 Withdraw
 Check final balance
-```
+````
 
 Expected final result:
 
@@ -24,7 +27,9 @@ USER = ...
 FINAL_BALANCE = DEPOSIT_AMOUNT - WITHDRAW_AMOUNT
 ```
 
-## 2. Requirements Before Running
+---
+
+## 2. Requirements
 
 Make sure Portal v2 is running at:
 
@@ -32,23 +37,28 @@ Make sure Portal v2 is running at:
 http://127.0.0.1:8081
 ```
 
-And make sure the v2 auth endpoint works:
+Make sure the auth endpoint works:
 
 ```text
 POST /api/v2/4001
 ```
 
+---
+
 ## 3. Run the Script
 
+Make sure you are in the directory that contains the script:
+
 ```bash
-cd /root/ && chmod +x test_v2_full_flow.sh && ./test_v2_full_flow.sh
+chmod +x ./test_v2_full_flow.sh
+./test_v2_full_flow.sh
 ```
 
-## 4. Script Configuration Variables
+---
 
-The script supports overrides through environment variables.
+## 4. Configuration
 
-Current default values:
+Default values:
 
 ```text
 BASE            = http://127.0.0.1:8081
@@ -61,11 +71,11 @@ DEPOSIT_AMOUNT  = 10000
 WITHDRAW_AMOUNT = 3000
 ```
 
-The test user is generated automatically:
+The script auto-generates:
 
 ```text
-USER = curlv2_<timestamp>
-TXN = txn_<USER>
+USER         = curlv2_<timestamp>
+TXN          = txn_<USER>
 WITHDRAW_TXN = txn_<USER>_w
 ```
 
@@ -82,46 +92,38 @@ WITHDRAW_AMOUNT=5000 \
 ./test_v2_full_flow.sh
 ```
 
-## 5. Actual Runtime Flow
+---
 
-### Step 1: Get access token
+## 5. Runtime Flow
 
-The script calls:
+### Step 1: Get Access Token
 
 ```text
 POST /api/v2/4001
 ```
 
-Request body:
+Request:
 
 ```json
 {
   "operatorCode": "default",
   "apiKey": "default_secret_key",
-  "timestamp": 1777481053512,
-  "signature": "..."
+  "timestamp": 123456789,
+  "signature": "HMAC_SHA256"
 }
 ```
 
-`signature` is generated with:
+Signature:
 
 ```text
 HMAC-SHA256(secret, operatorCode + apiKey + timestamp)
 ```
 
-The script stops if:
-
-```text
-success != true
-or accessToken cannot be extracted
-```
-
-Expected response:
+Expected:
 
 ```json
 {
   "success": true,
-  "errorCode": "0",
   "data": {
     "accessToken": "...",
     "refreshToken": "..."
@@ -129,9 +131,9 @@ Expected response:
 }
 ```
 
-### Step 2: Create account
+---
 
-The script calls:
+### Step 2: Create Account
 
 ```text
 POST /api/v2/4011
@@ -148,278 +150,147 @@ Body:
 }
 ```
 
-Expected result:
+---
 
-```text
-success = true
-errorCode = 0
-```
-
-### Step 3: Check balance
-
-The script calls:
+### Step 3: Check Balance
 
 ```text
 POST /api/v2/4012
-Authorization: Bearer <accessToken>
 ```
 
-Body:
-
-```json
-{
-  "operatorCode": "default",
-  "username": "curlv2_<timestamp>"
-}
-```
-
-The initial expected result is usually:
+Expected:
 
 ```text
 balance = 0
 ```
 
-### Step 4: Deposit
+---
 
-The script calls:
+### Step 4: Deposit
 
 ```text
 POST /api/v2/4021
-Authorization: Bearer <accessToken>
 ```
 
 Body:
 
 ```json
 {
-  "operatorCode": "default",
-  "username": "curlv2_<timestamp>",
-  "transactionId": "txn_<USER>",
   "type": "DEPOSIT",
-  "amount": 10000,
-  "currency": "VND"
+  "amount": 10000
 }
 ```
 
-Expected result:
+---
 
-```text
-success = true
-```
-
-### Step 5: Launch game
-
-The script calls:
+### Step 5: Launch Game
 
 ```text
 POST /api/v2/4031
-Authorization: Bearer <accessToken>
 ```
 
-Body:
+Expected:
 
 ```json
 {
-  "operatorCode": "default",
-  "username": "curlv2_<timestamp>",
-  "gameId": "bacay",
-  "platform": "WEB"
+  "launchUrl": "...",
+  "sessionToken": "..."
 }
 ```
 
-Expected response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "launchUrl": "...",
-    "sessionToken": "..."
-  }
-}
-```
+---
 
 ### Step 6: Withdraw
 
-The script calls:
-
 ```text
 POST /api/v2/4021
-Authorization: Bearer <accessToken>
 ```
-
-Body:
 
 ```json
 {
-  "operatorCode": "default",
-  "username": "curlv2_<timestamp>",
-  "transactionId": "txn_<USER>_w",
   "type": "WITHDRAW",
-  "amount": 3000,
-  "currency": "VND"
+  "amount": 3000
 }
 ```
 
-Expected result:
+---
 
-```text
-success = true
-```
-
-### Step 7: Final balance
-
-The script calls again:
+### Step 7: Final Balance
 
 ```text
 POST /api/v2/4012
-Authorization: Bearer <accessToken>
 ```
 
-Then it compares:
+Validation:
 
 ```text
-EXPECTED_BALANCE = DEPOSIT_AMOUNT - WITHDRAW_AMOUNT
-ACTUAL_BALANCE   = balance from the final response
+EXPECTED = DEPOSIT - WITHDRAW
+ACTUAL   = API response
 ```
 
-If they do not match, the script stops with:
+---
+
+## 6. Success Output
 
 ```text
-Balance mismatch
-```
-
-## 6. Correct Final Result
-
-When the whole flow passes, the script prints:
-
-```text
-✅ FULL FLOW PASSED
+FULL FLOW PASSED
 USER: curlv2_<timestamp>
 FINAL_BALANCE: 7000
 ```
 
-With the current defaults:
-
-```text
-10000 - 3000 = 7000
-```
+---
 
 ## 7. Common Errors
 
-### `FAILED at step: Get access token`
+### Auth failed
 
-Common causes:
+* Wrong API_KEY / SECRET
+* Invalid signature
 
-```text
-Wrong OP
-Wrong API_KEY
-Wrong SECRET
-Portal v2 is not running
-Invalid HMAC signature
-```
+---
 
-Check:
+### Cannot get accessToken
 
-```text
-Does POST /api/v2/4001 return success=true?
-```
+* Wrong response format
+* API down
 
-### `Cannot extract accessToken`
+---
 
-Cause:
+### Create account failed
 
-```text
-The auth response has no data.accessToken
-The returned JSON format is different from what the script parses
-```
+* Invalid token
+* DB issue
 
-### `FAILED at step: Create account`
+---
 
-Common causes:
+### Deposit / Withdraw failed
 
-```text
-Invalid JWT Bearer token
-Invalid operatorCode
-Database error while creating the account
-```
+* Duplicate transaction
+* User not found
 
-### `FAILED at step: Check balance`
+---
 
-Common causes:
+### Balance mismatch
 
-```text
-The user was not created correctly
-Invalid Bearer token
-Multi-tenant flow or cache issue
-```
+* API inconsistency
+* Transaction not applied
 
-### `FAILED at step: Deposit`
+---
 
-Common causes:
+## 8. Notes
+
+* This script tests **API v2 only**
+* Does NOT use captcha
+* Does NOT depend on v1 flow
+
+Command mapping:
 
 ```text
-Duplicate transactionId
-User does not exist
-Money service error
+4001 → auth
+4011 → create account
+4012 → balance
+4021 → deposit/withdraw
+4031 → launch
 ```
 
-### `FAILED at step: Launch game`
-
-Common causes:
-
-```text
-Invalid gameId
-User does not exist
-Invalid token
 ```
-
-### `FAILED at step: Withdraw`
-
-Common causes:
-
-```text
-Insufficient balance
-Duplicate transactionId
-User does not exist
-```
-
-### `Balance mismatch`
-
-This means:
-
-```text
-The deposit/withdraw API returned success
-but the final balance does not match the expected calculation
-```
-
-Check:
-
-```text
-The response from the deposit step
-The response from the withdraw step
-The final balance response
-```
-
-## 8. Important Notes
-
-This script:
-
-```text
-tests only API v2
-does not use captcha
-does not use v1 register/login
-does not need the v1-style nickname setup flow
-```
-
-The v2 commandId order used in the script:
-
-```text
-4001 -> auth token
-4011 -> create account
-4012 -> get balance
-4021 -> deposit / withdraw
-4031 -> launch game
-```
-
-This file only describes the current flow of `test_v2_full_flow.sh`.
