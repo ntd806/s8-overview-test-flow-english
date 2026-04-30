@@ -1,5 +1,3 @@
-Dưới đây là **bản tiếng Anh đã sửa hoàn chỉnh** của `OVERVIEW_TEST_FLOW.md` — clean, không còn `cd root/`, fix đúng tên file và ready để copy:
-
 ````md
 # Test Overview
 
@@ -72,9 +70,10 @@ test_s8_test_socket.md
 Run the socket testing tool:
 
 ```bash
-git clone git@github.com:ntd806/s8-test-socket.git \
-&& cd s8-test-socket \
-&& docker compose up -d --build
+git clone git@github.com:ntd806/s8-test-socket.git
+cd s8-test-socket
+git checkout ui
+docker compose up -d --build
 ```
 
 Then open:

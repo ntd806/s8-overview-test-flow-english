@@ -51,9 +51,10 @@ SESSIONKEY = eyJuaWNrbmFtZSI6InBsYXlfNDgxMjE4NCIs...
 Clone and run:
 
 ```bash
-git clone git@github.com:ntd806/s8-test-socket.git \
-&& cd s8-test-socket \
-&& docker compose up -d --build
+git clone git@github.com:ntd806/s8-test-socket.git
+cd s8-test-socket
+git checkout ui
+docker compose up -d --build
 ```
 
 Open the UI:
