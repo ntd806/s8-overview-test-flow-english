@@ -5,7 +5,25 @@ set -euo pipefail
 # CONFIG
 # =========================
 
-BASE="${BASE:-http://127.0.0.1:8081}"
+INPUT_BASE="${BASE-}"
+INPUT_PORTAL_HOST="${PORTAL_HOST-}"
+INPUT_HOST="${HOST-}"
+INPUT_IP="${IP-}"
+INPUT_PORTAL_PORT="${PORTAL_PORT-}"
+INPUT_PORTAL_SCHEME="${PORTAL_SCHEME-}"
+
+ENV_FILE="${ENV_FILE:-.env}"
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+  set +a
+fi
+
+PORTAL_HOST="${INPUT_PORTAL_HOST:-${PORTAL_HOST:-${INPUT_HOST:-${HOST:-${INPUT_IP:-${IP:-127.0.0.1}}}}}}"
+PORTAL_PORT="${INPUT_PORTAL_PORT:-${PORTAL_PORT:-8081}}"
+PORTAL_SCHEME="${INPUT_PORTAL_SCHEME:-${PORTAL_SCHEME:-http}}"
+BASE="${INPUT_BASE:-${BASE:-${PORTAL_SCHEME}://${PORTAL_HOST}:${PORTAL_PORT}}}"
 OP="${OP:-default}"
 API_KEY="${API_KEY:-default_secret_key}"
 SECRET="${SECRET:-default_secret_key}"
