@@ -1,15 +1,15 @@
-````md
 ---
 # SOCKET INTEGRATION INFORMATION FOR THE GAME
+
 ```text
 Folder: Games
-````
+```
 
 # TEST OVERVIEW
 
 This file is the high-level guide for which documents to read first and the correct order to run tests.
 
-
+---
 
 ## 1. Goal
 
@@ -19,7 +19,7 @@ Recommended testing order:
 Legacy API v1
 Game socket
 API v2
-````
+```
 
 Reason:
 
@@ -166,9 +166,6 @@ player_test_flow.md
 
 ## 6. Notes
 
-* All commands assume you are already in the correct working directory.
-* No absolute paths are required.
-* Scripts are portable and can run in any environment.
-
-```
-```
+- All commands assume you are already in the correct working directory.
+- No absolute paths are required.
+- Scripts are portable and can run in any environment.
