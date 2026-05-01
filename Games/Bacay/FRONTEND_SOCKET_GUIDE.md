@@ -48,9 +48,10 @@ The repo does NOT include full source for:
 
 Based on current config:
 
-* TCP: `443`
-* WebSocket: `444`
-* WebSocket SSL: `446`
+* TCP game: `21043`
+* W-ebSocket: `21044`
+* WebSocket SSL: `21046`
+* Admin TCP: `21045`
 
 ---
 
