@@ -4,63 +4,22 @@ $ErrorActionPreference = "Stop"
 # CONFIG
 # =========================
 
-$INPUT_BASE          = $env:BASE
-$INPUT_PORTAL_HOST   = $env:PORTAL_HOST
-$INPUT_APP_HOST      = $env:HOST
-$INPUT_IP            = $env:IP
-$INPUT_PORTAL_PORT   = $env:PORTAL_PORT
-$INPUT_PORTAL_SCHEME = $env:PORTAL_SCHEME
-
-$ENV_FILE = if ($env:ENV_FILE) { $env:ENV_FILE } else { ".env" }
+$ENV_FILE = ".env"
 
 if (Test-Path $ENV_FILE) {
     Get-Content $ENV_FILE | ForEach-Object {
-        $line = $_.Trim()
-
-        if ($line -and -not $line.StartsWith("#") -and $line.Contains("=")) {
-            $parts = $line.Split("=", 2)
-            $key = $parts[0].Trim()
-            $value = $parts[1].Trim().Trim('"').Trim("'")
-            [Environment]::SetEnvironmentVariable($key, $value, "Process")
+        if ($_ -match "=") {
+            $key, $value = $_ -split "=", 2
+            [Environment]::SetEnvironmentVariable($key.Trim(), $value.Trim(), "Process")
         }
     }
 }
 
-$PORTAL_HOST = if ($INPUT_PORTAL_HOST) {
-    $INPUT_PORTAL_HOST
-} elseif ($env:PORTAL_HOST) {
-    $env:PORTAL_HOST
-} elseif ($INPUT_APP_HOST) {
-    $INPUT_APP_HOST
-} elseif ($env:HOST) {
-    $env:HOST
-} elseif ($INPUT_IP) {
-    $INPUT_IP
-} elseif ($env:IP) {
-    $env:IP
-} else {
-    "127.0.0.1"
-}
+$PORTAL_HOST = if ($env:PORTAL_HOST) { $env:PORTAL_HOST } elseif ($env:HOST) { $env:HOST } elseif ($env:IP) { $env:IP } else { "127.0.0.1" }
+$PORTAL_PORT = if ($env:PORTAL_PORT) { $env:PORTAL_PORT } else { "8081" }
+$PORTAL_SCHEME = if ($env:PORTAL_SCHEME) { $env:PORTAL_SCHEME } else { "http" }
 
-$PORTAL_PORT = if ($INPUT_PORTAL_PORT) {
-    $INPUT_PORTAL_PORT
-} elseif ($env:PORTAL_PORT) {
-    $env:PORTAL_PORT
-} else {
-    "8081"
-}
-
-$PORTAL_SCHEME = if ($INPUT_PORTAL_SCHEME) {
-    $INPUT_PORTAL_SCHEME
-} elseif ($env:PORTAL_SCHEME) {
-    $env:PORTAL_SCHEME
-} else {
-    "http"
-}
-
-$BASE = if ($INPUT_BASE) {
-    $INPUT_BASE
-} elseif ($env:BASE) {
+$BASE = if ($env:BASE) {
     $env:BASE
 } else {
     "${PORTAL_SCHEME}://${PORTAL_HOST}:${PORTAL_PORT}"
@@ -84,113 +43,67 @@ $WITHDRAW_TXN = "${TXN}_w"
 # HELPERS
 # =========================
 
-function ConvertTo-Base64HmacSha256 {
-    param (
-        [string]$Text,
-        [string]$Secret
-    )
+function HmacSHA256-Base64 {
+    param($text, $secret)
 
     $hmac = New-Object System.Security.Cryptography.HMACSHA256
-    $hmac.Key = [System.Text.Encoding]::UTF8.GetBytes($Secret)
-
-    $bytes = [System.Text.Encoding]::UTF8.GetBytes($Text)
-    $hash = $hmac.ComputeHash($bytes)
-
-    return [Convert]::ToBase64String($hash)
+    $hmac.Key = [System.Text.Encoding]::UTF8.GetBytes($secret)
+    $bytes = [System.Text.Encoding]::UTF8.GetBytes($text)
+    return [Convert]::ToBase64String($hmac.ComputeHash($bytes))
 }
 
-function Print-Json {
-    param ($Object)
-
-    if ($Object -is [string]) {
-        Write-Host $Object
-    } else {
-        Write-Host ($Object | ConvertTo-Json -Depth 20)
-    }
+function Print-Json($obj) {
+    Write-Host ($obj | ConvertTo-Json -Depth 20)
 }
 
-function Assert-Success {
-    param (
-        [string]$Step,
-        $Json
-    )
-
-    if ($null -eq $Json) {
-        Write-Host ""
-        Write-Host "FAILED at step: $Step"
-        Write-Host "Response is null"
-        exit 1
-    }
-
-    if ($Json.success -ne $true) {
-        Write-Host ""
-        Write-Host "FAILED at step: $Step"
-        Write-Host "Response:"
-        Print-Json $Json
-        exit 1
-    }
-}
-
-function Call-Api {
-    param (
-        [string]$Step,
-        [string]$Url,
-        [hashtable]$Body,
-        [hashtable]$Headers = @{}
-    )
+function Call-Api($step, $url, $body, $headers = @{}) {
 
     Write-Host ""
     Write-Host "=============================="
-    Write-Host $Step
+    Write-Host $step
     Write-Host "=============================="
 
-    $jsonBody = $Body | ConvertTo-Json -Depth 20
+    $jsonBody = $body | ConvertTo-Json -Depth 10
 
     Write-Host "URL:"
-    Write-Host $Url
+    Write-Host $url
     Write-Host "BODY:"
     Write-Host $jsonBody
 
     try {
-        $response = Invoke-WebRequest `
-            -Uri $Url `
+        $res = Invoke-WebRequest `
+            -Uri $url `
             -Method POST `
-            -Headers $Headers `
+            -Headers $headers `
             -ContentType "application/json" `
             -Body $jsonBody `
             -UseBasicParsing `
-            -TimeoutSec 30 `
-            -ErrorAction Stop
+            -TimeoutSec 30
 
         Write-Host "STATUS:"
-        Write-Host $response.StatusCode
+        Write-Host $res.StatusCode
 
         Write-Host "RESPONSE:"
-        Write-Host $response.Content
+        Write-Host $res.Content
 
-        if ([string]::IsNullOrWhiteSpace($response.Content)) {
-            Write-Host "ERROR: empty response at step $Step"
+        $json = $res.Content | ConvertFrom-Json
+
+        if ($json.success -ne $true) {
+            Write-Host "FAILED:"
+            Print-Json $json
             exit 1
         }
-
-        $json = $response.Content | ConvertFrom-Json
-
-        Assert-Success $Step $json
 
         return $json
     }
     catch {
-        Write-Host ""
-        Write-Host "REQUEST FAILED at step: $Step"
+        Write-Host "REQUEST FAILED:"
         Write-Host $_.Exception.Message
 
         if ($_.Exception.Response) {
-            try {
-                $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                $errorBody = $reader.ReadToEnd()
-                Write-Host "ERROR RESPONSE BODY:"
-                Write-Host $errorBody
-            } catch {}
+            $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+            Write-Host "ERROR BODY:"
+            Write-Host $reader.ReadToEnd()
         }
 
         exit 1
@@ -209,7 +122,7 @@ Write-Host "USER: $USER_NAME"
 Write-Host "======================================"
 
 # =========================
-# 1. GET ACCESS TOKEN
+# 1. GET TOKEN
 # =========================
 
 Write-Host ""
@@ -217,27 +130,25 @@ Write-Host "=============================="
 Write-Host "1. Get access token"
 Write-Host "=============================="
 
-$TS = "$([int64](([DateTimeOffset]::UtcNow).ToUnixTimeMilliseconds()))"
-$SIG_TEXT = "${OP}${API_KEY}${TS}"
-$SIG = ConvertTo-Base64HmacSha256 -Text $SIG_TEXT -Secret $SECRET
+$TS = [int64](([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()))
+$SIG = HmacSHA256-Base64 "${OP}${API_KEY}${TS}" $SECRET
 
 $tokenBody = @{
     operatorCode = $OP
     apiKey       = $API_KEY
-    timestamp    = [int64]$TS
+    timestamp    = $TS
     signature    = $SIG
 }
 
-$TOKEN_JSON = Call-Api `
-    -Step "1. Get access token" `
-    -Url "$BASE/api/v2/4001" `
-    -Body $tokenBody
+$TOKEN_JSON = Call-Api "1. Get access token" "$BASE/api/v2/4001" $tokenBody
 
-$ACCESS_TOKEN  = $TOKEN_JSON.accessToken
-$REFRESH_TOKEN = $TOKEN_JSON.refreshToken
+# ⭐ FIX QUAN TRỌNG
+$ACCESS_TOKEN  = $TOKEN_JSON.data.accessToken
+$REFRESH_TOKEN = $TOKEN_JSON.data.refreshToken
 
 if (-not $ACCESS_TOKEN) {
     Write-Host "Cannot extract accessToken"
+    Print-Json $TOKEN_JSON
     exit 1
 }
 
@@ -251,123 +162,83 @@ $AUTH_HEADERS = @{
 # 2. CREATE ACCOUNT
 # =========================
 
-$CREATE_HEADERS = @{
-    Authorization  = "Bearer $ACCESS_TOKEN"
-    "X-Request-Id" = "create-$USER_NAME"
-}
-
-$createBody = @{
+Call-Api "2. Create account" "$BASE/api/v2/4011" @{
     operatorCode = $OP
     username     = $USER_NAME
     currency     = $CURRENCY
-}
-
-Call-Api `
-    -Step "2. Create account" `
-    -Url "$BASE/api/v2/4011" `
-    -Body $createBody `
-    -Headers $CREATE_HEADERS | Out-Null
+} @{
+    Authorization  = "Bearer $ACCESS_TOKEN"
+    "X-Request-Id" = "create-$USER_NAME"
+} | Out-Null
 
 # =========================
 # 3. CHECK BALANCE
 # =========================
 
-$balanceBody = @{
+Call-Api "3. Check balance" "$BASE/api/v2/4012" @{
     operatorCode = $OP
     username     = $USER_NAME
-}
-
-Call-Api `
-    -Step "3. Check balance" `
-    -Url "$BASE/api/v2/4012" `
-    -Body $balanceBody `
-    -Headers $AUTH_HEADERS | Out-Null
+} $AUTH_HEADERS | Out-Null
 
 # =========================
 # 4. DEPOSIT
 # =========================
 
-$depositBody = @{
+Call-Api "4. Deposit" "$BASE/api/v2/4021" @{
     operatorCode  = $OP
     username      = $USER_NAME
     transactionId = $TXN
     type          = "DEPOSIT"
     amount        = $DEPOSIT_AMOUNT
     currency      = $CURRENCY
-}
-
-Call-Api `
-    -Step "4. Deposit" `
-    -Url "$BASE/api/v2/4021" `
-    -Body $depositBody `
-    -Headers $AUTH_HEADERS | Out-Null
+} $AUTH_HEADERS | Out-Null
 
 # =========================
 # 5. LAUNCH GAME
 # =========================
 
-$launchBody = @{
+Call-Api "5. Launch game" "$BASE/api/v2/4031" @{
     operatorCode = $OP
     username     = $USER_NAME
     gameId       = $GAME_ID
     platform     = "WEB"
-}
-
-Call-Api `
-    -Step "5. Launch game" `
-    -Url "$BASE/api/v2/4031" `
-    -Body $launchBody `
-    -Headers $AUTH_HEADERS | Out-Null
+} $AUTH_HEADERS | Out-Null
 
 # =========================
 # 6. WITHDRAW
 # =========================
 
-$withdrawBody = @{
+Call-Api "6. Withdraw" "$BASE/api/v2/4021" @{
     operatorCode  = $OP
     username      = $USER_NAME
     transactionId = $WITHDRAW_TXN
     type          = "WITHDRAW"
     amount        = $WITHDRAW_AMOUNT
     currency      = $CURRENCY
-}
-
-Call-Api `
-    -Step "6. Withdraw" `
-    -Url "$BASE/api/v2/4021" `
-    -Body $withdrawBody `
-    -Headers $AUTH_HEADERS | Out-Null
+} $AUTH_HEADERS | Out-Null
 
 # =========================
-# 7. FINAL BALANCE CHECK
+# 7. FINAL BALANCE
 # =========================
 
-$FINAL_JSON = Call-Api `
-    -Step "7. Final balance" `
-    -Url "$BASE/api/v2/4012" `
-    -Body $balanceBody `
-    -Headers $AUTH_HEADERS
+$FINAL = Call-Api "7. Final balance" "$BASE/api/v2/4012" @{
+    operatorCode = $OP
+    username     = $USER_NAME
+} $AUTH_HEADERS
 
-$FINAL_BALANCE = [int]$FINAL_JSON.balance
-$EXPECTED_BALANCE = $DEPOSIT_AMOUNT - $WITHDRAW_AMOUNT
+$FINAL_BALANCE = [int]$FINAL.data.balance
+$EXPECTED = $DEPOSIT_AMOUNT - $WITHDRAW_AMOUNT
 
 Write-Host ""
-Write-Host "Expected: $EXPECTED_BALANCE"
+Write-Host "Expected: $EXPECTED"
 Write-Host "Actual:   $FINAL_BALANCE"
 
-if ($FINAL_BALANCE -ne $EXPECTED_BALANCE) {
+if ($FINAL_BALANCE -ne $EXPECTED) {
     Write-Host "Balance mismatch"
     exit 1
 }
 
-# =========================
-# DONE
-# =========================
-
 Write-Host ""
 Write-Host "======================================"
 Write-Host "FULL FLOW PASSED"
-Write-Host "======================================"
-Write-Host "USER: $USER_NAME"
-Write-Host "FINAL_BALANCE: $FINAL_BALANCE"
 Write-Host "======================================"
