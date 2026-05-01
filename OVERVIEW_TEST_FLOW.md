@@ -1,12 +1,14 @@
 ````md
-# SOCKET INTEGRATION INFORMATION FOR THE GAME
+---
+## SOCKET INTEGRATION INFORMATION FOR THE GAME
 
 **Folder:** Games
-
-# TEST OVERVIEW
+---
+---
+## TEST OVERVIEW
 
 This file is the high-level guide for which documents to read first and the correct order to run tests.
-
+---
 ---
 
 ## 1. Goal
