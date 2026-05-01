@@ -9,7 +9,7 @@ $IP            = $env:IP
 $PORTAL_PORT   = $env:PORTAL_PORT
 $PORTAL_SCHEME = $env:PORTAL_SCHEME
 
-if (-not $PORTAL_HOST)   { $PORTAL_HOST = "192.168.1.225" }
+if (-not $PORTAL_HOST)   { $PORTAL_HOST = "43.207.3.134" }
 if (-not $PORTAL_PORT)   { $PORTAL_PORT = "8081" }
 if (-not $PORTAL_SCHEME) { $PORTAL_SCHEME = "http" }
 
