@@ -1,10 +1,7 @@
 ````md
----
 # SOCKET INTEGRATION INFORMATION FOR THE GAME
 
-```text
-Folder: Games
-````
+**Folder:** Games
 
 # TEST OVERVIEW
 
@@ -20,7 +17,7 @@ Recommended testing order:
 Legacy API v1
 Game socket
 API v2
-```
+````
 
 Reason:
 
