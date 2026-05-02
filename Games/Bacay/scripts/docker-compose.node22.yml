@@ -1,0 +1,15 @@
+services:
+  bacay-node22-script:
+    build:
+      context: ..
+      dockerfile: scripts/Dockerfile.node22
+    working_dir: /workspace
+    env_file:
+      - .env
+    environment:
+      BACAY_WS_URL: ws://host.docker.internal:21044/websocket
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ..:/workspace
+    command: ["node", "scripts/test-bacay-flow.js"]
