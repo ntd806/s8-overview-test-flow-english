@@ -2,5 +2,4 @@ FROM node:22-alpine
 
 WORKDIR /workspace
 
-# CMD ["node", "scripts/test-bacay-flow.js"]
 CMD ["node", "scripts/frontend-bacay-client-example.js"]

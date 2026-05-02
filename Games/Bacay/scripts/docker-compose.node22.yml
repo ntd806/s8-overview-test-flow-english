@@ -12,4 +12,4 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ..:/workspace
-    command: ["node", "scripts/test-bacay-flow.js"]
+    command: ["node", "scripts/frontend-bacay-client-example.js"]
