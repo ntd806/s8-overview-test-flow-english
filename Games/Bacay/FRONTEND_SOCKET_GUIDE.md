@@ -1,87 +1,355 @@
-# Bacay Frontend Socket Guide
+````md
+# Bacay Frontend Game Integration
 
-This document is intended for frontend developers integrating the Bacay game client via socket.
+This document is written for frontend developers integrating the Bacay game according to the actual flow currently running in the source.
 
-## Objectives
+Objectives of this document:
 
-* Understand the actual game flow based on current code.
-* Know which packets are received and when.
-* Distinguish between private packets and broadcast packets.
-* Have enough detail to build frontend state/store.
+- understand what the frontend needs to prepare before opening a socket
+- understand the correct sequence `login -> join room -> receive 3118 -> play game`
+- understand the input variables of each step
+- understand which packets are milestones for building game state
 
-This document strictly follows the current repository source, not assumptions from older clients.
+This document does not follow a packet test/debug perspective. Variables like `BACAY_LOGIN_PACKET_HEX` and `BACAY_JOIN_PACKET_HEX` are not the focus here.
 
----
+## 1. What the frontend needs to prepare
 
-## 1. Scope to Understand First
+Before touching the socket, the frontend must have results from the HTTP/API login step of the system:
 
-This repo clearly describes the Bacay game after the user has:
+```ts
+type AuthData = {
+  nickname: string
+  sessionKey: string
+}
+````
 
-* successfully connected socket
-* successfully logged in
-* successfully joined a room
+Meaning:
 
-The repo does NOT include full source for:
+* `nickname`: the username entering the game
+* `sessionKey`: session token returned by backend/app
 
-* BitZero handshake/login protocol
-* base packet frame
-* join room command from core game-room
-* base error envelope (`BaseMsg`)
+If `nickname` and `sessionKey` are not available, do not proceed with the socket step.
 
-👉 Frontend should separate into 2 layers:
+## 2. Correct integration flow
 
-### 1. Core socket layer
-
-* connect
-* login
-* join room
-* decode base packet frame
-
-### 2. Bacay game layer
-
-* handle commands `3101..3123`
-* update game store/UI
-
----
-
-## 2. Connection Endpoints
-
-Based on current config:
-
-* TCP game: `21043`
-* W-ebSocket: `21044`
-* WebSocket SSL: `21046`
-* Admin TCP: `21045`
-
----
-
-## 3. Correct Game Flow
+Frontend must follow this exact order:
 
 ```text
-Connect
--> Login
--> Join Room
--> Receive 3118 JOIN_ROOM_SUCCESS
--> Wait auto-start or send 3102 BAT_DAU
--> Receive 3114 MOI_DAT_CUOC
--> Send betting commands
--> Receive 3105 CHIA_BAI
--> Send 3101 MO_BAI
--> Receive 3103 KET_THUC
--> Receive/handle 3123 CMD_SEND_UPDATE_MATCH
+HTTP/API login
+-> get nickname + sessionKey
+-> connect socket
+-> send core login
+-> login success
+-> join room
+-> receive 3118 JOIN_ROOM_SUCCESS
+-> then start Bacay game flow
 ```
 
-Important:
+Not allowed:
 
-* Only send Bacay commands after joining room successfully.
-* Treat `3118` as the first bootstrap packet.
-* Treat `3110` as the strongest full-sync packet.
+* sending Bacay commands before login success
+* sending Bacay commands before `3118`
 
----
+## 3. Connection endpoint
 
-## 4. Recommended Frontend State Model
+According to the current Docker/source repo:
 
-### 4.1 Constants
+* TCP: `21043`
+* WebSocket: `21044`
+* WebSocket SSL: `21046`
+
+According to internal app config:
+
+* Internal TCP: `443`
+* Internal WebSocket: `444`
+* Internal WebSocket SSL: `446`
+
+References:
+
+Frontend web should use:
+
+```text
+ws://host:port/websocket
+```
+
+or production:
+
+```text
+wss://domain/websocket
+```
+
+## 4. Step 1: connect socket
+
+Input:
+
+```ts
+type SocketConnectInput = {
+  wsUrl: string
+}
+```
+
+Example:
+
+```ts
+const socketConfig = {
+  wsUrl: "ws://127.0.0.1:21044/websocket",
+}
+```
+
+Frontend needs to:
+
+* open WebSocket
+* wait for `open`
+* listen to `message`
+* listen to `close`
+* listen to `error`
+
+At this step:
+
+* only transport connection exists
+* not logged in yet
+* not in room yet
+
+## 5. Step 2: send core login
+
+### 5.1 Input data
+
+Frontend sends login with exactly 2 fields:
+
+```ts
+type CoreLoginInput = {
+  nickname: string
+  sessionKey: string
+}
+```
+
+Field order in body:
+
+1. `nickname`
+2. `sessionKey`
+
+This is verified from login source:
+* `nickname` first, then `sessionKey`
+
+### 5.2 Login route
+
+This login belongs to BitZero core, not Bacay commands `3101..3123`.
+
+Verified login route:
+
+```text
+controllerId = 1
+actionId = 1
+```
+
+WebSocket frame client -> server:
+
+```text
+00 00 00 | controllerId(1 byte) | actionId(uint16_be) | content
+```
+
+For login:
+
+```text
+content = string(nickname) + string(sessionKey)
+```
+
+String format in this flow:
+
+```text
+uint16_be length + utf8 bytes
+```
+
+### 5.3 Does dev_mod change frontend flow
+
+No.
+
+`dev_mod` does not change what frontend sends. It only changes how server validates after parsing `nickname + sessionKey`.
+
+* `dev_mod=1`: server uses internal dev branch
+* `dev_mod=0`: server calls real user service to check session
+
+Frontend still sends the same login input:
+
+```ts
+{
+  nickname,
+  sessionKey,
+}
+```
+
+## 6. Step 3: wait for login success
+
+After sending login, frontend waits for login response.
+
+Verified login error codes:
+
+* `1`: invalid session key
+* `2`: blocked or login rejected
+* `3`: server maintenance
+
+Frontend should have at least this state:
+
+```ts
+type LoginState =
+  | "idle"
+  | "socket-open"
+  | "login-sent"
+  | "login-ok"
+  | "login-fail"
+```
+
+Only proceed to join room when `login-ok`.
+
+## 7. Step 4: join room
+
+After login success, frontend must join room via core game-room.
+
+There are 2 main ways.
+
+### 7.1 Join by bet filter
+
+Input:
+
+```ts
+type JoinByBetInput = {
+  moneyType: number
+  maxUserPerRoom: number
+  moneyBet: number
+  rule: number
+}
+```
+
+Route:
+
+```text
+controllerId = 1
+actionId = 3001
+```
+
+Use when:
+
+* UI wants to auto-join by bet level
+* frontend does not need to specify exact room id
+
+Tested local values:
+
+```ts
+{
+  moneyType: 0,
+  maxUserPerRoom: 8,
+  moneyBet: 1000,
+  rule: 0,
+}
+```
+
+### 7.2 Join by room id
+
+Input:
+
+```ts
+type JoinByRoomIdInput = {
+  roomId: number
+  password: string
+}
+```
+
+Route:
+
+```text
+controllerId = 1
+actionId = 3015
+```
+
+Use when:
+
+* frontend already has room list
+* user selects a specific table
+
+### 7.3 Get room list if needed
+
+If frontend needs to fetch room list first:
+
+```ts
+type RoomListInput = {
+  moneyType: number
+  maxUserPerRoom: number
+  moneyBet: number
+  rule: number
+  from: number
+  to: number
+}
+```
+
+Route:
+
+```text
+controllerId = 1
+actionId = 3014
+```
+
+## 8. Step 5: wait for `3118`
+
+This is the most important milestone for frontend to start Bacay game.
+
+Successful join room will receive:
+
+```text
+3118 - JOIN_ROOM_SUCCESS
+```
+
+From this point, frontend can:
+
+* build table state
+* render players
+* render game phase
+* send Bacay commands `3101..3123`
+
+`3118` is the first bootstrap packet of the Bacay game layer.
+
+## 9. Important packets frontend must handle
+
+Core packets:
+
+* `3118`: initial state after join room
+* `3110`: strongest full sync when reconnect
+* `3103`: final result of round
+* `3123`: reset for next round
+
+Phase/gameplay packets:
+
+* `3107`: auto start
+* `3114`: invite to bet
+* `3105`: deal cards
+* `3101`: open cards
+
+Room events:
+
+* `3121`: new user joins
+* `3119`: user leaves room
+* `3117`: change room owner
+* `3113`: change banker
+* `3120`: kick
+
+## 10. Bacay commands after joining room
+
+Only send after `3118`.
+
+Important client -> server commands:
+
+* `3102`: start round
+* `3109`: bet
+* `3112`: into ga
+* `3106`: ke cua
+* `3104`: danh bien
+* `3108`: accept danh bien
+* `3101`: open cards
+* `3111`: register leave
+* `3116`: register continue
+
+## 11. Recommended frontend state model
+
+### 11.1 Constants
 
 ```ts
 export const MAX_SEAT = 8
@@ -100,9 +368,7 @@ export enum GameState {
 }
 ```
 
----
-
-### 4.2 Store Structure
+### 11.2 Suggested store shape
 
 ```ts
 type SeatPublicState = {
@@ -143,230 +409,85 @@ type MatchState = {
 
 Principles:
 
-* Always build state based on `chair`
-* Do NOT rely on packet order
-* Do NOT assume compact player arrays
-* Empty seats must still exist
+* always build state by `chair`
+* always maintain all 8 seats
+* do not rely on packet order
+* clearly separate public state and private state
 
----
+## 12. Meaning of key variables
 
-### 4.3 Key Field Meanings (Condensed)
-
-* `chair`: seat index (0–7), primary mapping key
-* `uChair`: current user’s seat
+* `chair`: seat index `0..7`
+* `uChair`: current user seat
 * `chuongChair`: banker seat
-* `ownerChair`: room owner seat
-* `moneyBet`: base bet amount
-* `moneyType`: currency type (0: xu, 1: vin)
+* `ownerChair`: room owner
+* `moneyBet`: base bet
+* `moneyType`: currency type
 * `rule`: room rule
-* `gameId`: match ID
-* `roomId`: room ID
-* `gameState`: lifecycle (waiting / playing / ending)
-* `gameAction`: sub-phase (betting / opening)
-* `countDownTime`: authoritative server timer
-* `isAutoStart`: auto-start flag
-* `playerState`: seat status
-* `currentMoney`: player balance
-* `reqQuitRoom`: exit request flag
-* `handCards`: private cards
-* `cuocChuong`: bet vs banker
-* `cuocGa`: side bet
-* `cuocKeCua`: side alignment bets
-* `cuocDanhBien`: duel bets
+* `gameId`: round id
+* `roomId`: room id
+* `gameState`: waiting / playing / ending
+* `gameAction`: sub-phase in round
+* `countDownTime`: server countdown time
+* `playerState`: seat state
+* `currentMoney`: current user money
+* `reqQuitRoom`: request leave flag
+* `handCards`: personal cards
+* `cuocChuong`: bet with banker
+* `cuocGa`: ga bet
+* `cuocKeCua`: ke cua bet
+* `cuocDanhBien`: danh bien bet
 
----
-
-## 5. Frontend Source of Truth
-
-Key packets:
-
-* `3118` → initial state (join)
-* `3110` → full sync (reconnect)
-* `3103` → personal result
-* `3123` → reset for next match
-
----
-
-## 6. Game Command List
-
-```ts
-export enum BacayCmd {
-  MO_BAI = 3101,
-  BAT_DAU = 3102,
-  KET_THUC = 3103,
-  YEU_CAU_DANH_BIEN = 3104,
-  CHIA_BAI = 3105,
-  KE_CUA = 3106,
-  TU_DONG_BAT_DAU = 3107,
-  DONG_Y_DANH_BIEN = 3108,
-  DAT_CUOC = 3109,
-  THONG_TIN_BAN_CHOI = 3110,
-  DANG_KY_THOAT_PHONG = 3111,
-  VAO_GA = 3112,
-  DOI_CHUONG = 3113,
-  MOI_DAT_CUOC = 3114,
-  CHEAT_CARDS = 3115,
-  DANG_KY_CHOI_TIEP = 3116,
-  UPDATE_OWNER_ROOM = 3117,
-  JOIN_ROOM_SUCCESS = 3118,
-  LEAVE_GAME = 3119,
-  NOTIFY_KICK_FROM_ROOM = 3120,
-  NEW_USER_JOIN = 3121,
-  NOTIFY_USER_GET_JACKPOT = 3122,
-  CMD_SEND_UPDATE_MATCH = 3123,
-}
-```
-
----
-
-## 7. Client → Server Commands (Summary)
-
-* `3102` → start game
-* `3109` → place bet
-* `3112` → join side pot
-* `3106` → side alignment bet
-* `3104` → request duel
-* `3108` → accept duel
-* `3101` → reveal cards
-* `3111` → request exit
-* `3116` → continue next round
-
----
-
-## 8. Server → Client (Key Handling)
-
-### Important Packets
-
-* `3118` → JOIN_ROOM_SUCCESS → bootstrap state
-* `3121` → NEW_USER_JOIN → update seat only
-* `3110` → GAME_INFO → full sync (strongest)
-* `3114` → BETTING PHASE
-* `3105` → DEAL CARDS (private)
-* `3101` → REVEAL RESULT (broadcast)
-* `3103` → END GAME (personalized)
-* `3123` → RESET MATCH
-* `3119` → USER LEAVE
-* `3113` → CHANGE BANKER
-* `3120` → KICK
-* `3122` → JACKPOT
-
----
-
-## 9. Full Frontend Flow
-
-### Join Room
+## 13. Game flow frontend must handle
 
 ```text
--> 3118
--> possibly 3121 updates
+3118 JOIN_ROOM_SUCCESS
+-> 3107 AUTO_START or wait for start
+-> 3114 BET_PHASE
+-> user sends bet command
+-> 3105 DEAL_CARDS
+-> 3101 OPEN_CARDS
+-> 3103 END_GAME
+-> 3123 RESET MATCH
 ```
 
-### Waiting
+Reconnect:
 
 ```text
--> 3107 auto-start OR 3102 manual start
+reconnect
+-> 3110 GAME_INFO
+-> resync full state
 ```
 
-### Betting
+## 14. Integration checklist
 
-```text
--> 3114
--> send betting commands
+* perform HTTP/API login first to get `nickname` and `sessionKey`
+* connect to correct `ws://.../websocket` or `wss://.../websocket`
+* send core login with `controllerId=1`, `actionId=1`
+* only join room after login success
+* only send Bacay commands after `3118`
+* use `3118` to initialize store
+* use `3110` for full sync when reconnect
+* always map players by `chair`
+
+## 15. What belongs to frontend vs test/debug
+
+Frontend integration should focus on:
+
+* `wsUrl`
+* `nickname`
+* `sessionKey`
+* join room information
+* packets `3118`, `3110`, `3101..3123`
+
+Test/debug focuses on:
+
+* `BACAY_LOGIN_PACKET_HEX`
+* `BACAY_JOIN_PACKET_HEX`
+* replaying raw hex packets
+
+If the frontend team is integrating the game, prioritize reading this document first.
+
 ```
 
-### Deal & Reveal
-
-```text
--> 3105
--> 3101 actions
+:contentReference[oaicite:0]{index=0}
 ```
-
-### End Game
-
-```text
--> 3103
--> 3123 reset
-```
-
-### Reconnect
-
-```text
--> 3110
--> possibly 3103
-```
-
----
-
-## 10. Frontend Rules
-
-### UI Rules
-
-* Show BET only when PLAYING
-* Hide actions for banker when needed
-* VAO_GA only when players > 2
-* KE_CUA / DANH_BIEN must validate targets
-* MO_BAI only after cards dealt
-
----
-
-### State Phases
-
-```ts
-type UiPhase =
-  | "idle"
-  | "joined"
-  | "auto_start"
-  | "betting"
-  | "dealt"
-  | "opening"
-  | "ending"
-```
-
----
-
-### Optimistic Update
-
-* Avoid relying on optimistic updates
-* Always confirm with server response
-
----
-
-## 11. Frontend Checklist
-
-* Parse by `cmdId`
-* Distinguish private vs broadcast
-* Always keep 8 seats
-* Separate public/private state
-* Use:
-
-  * `3118` → init
-  * `3110` → reconnect
-  * `3123` → reset
-* Handle personalized result (`3103`)
-
----
-
-## 12. Packet Direction Summary
-
-| Cmd  | Name          | Receiver        |
-| ---- | ------------- | --------------- |
-| 3118 | join success  | self            |
-| 3121 | new user      | others          |
-| 3110 | game info     | self            |
-| 3107 | auto start    | broadcast       |
-| 3114 | betting       | players         |
-| 3109 | bet           | broadcast/local |
-| 3112 | side pot      | broadcast/local |
-| 3106 | side bet      | broadcast/local |
-| 3104 | duel request  | target only     |
-| 3108 | duel accept   | 2 players       |
-| 3105 | deal cards    | private         |
-| 3101 | reveal        | broadcast       |
-| 3103 | end           | private         |
-| 3123 | update match  | per player      |
-| 3119 | leave         | broadcast       |
-| 3113 | change banker | broadcast       |
-| 3120 | kick          | self            |
-| 3122 | jackpot       | broadcast       |
-
----
