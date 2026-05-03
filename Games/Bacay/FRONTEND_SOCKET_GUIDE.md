@@ -488,6 +488,4 @@ Test/debug focuses on:
 If the frontend team is integrating the game, prioritize reading this document first.
 
 ```
-
-:contentReference[oaicite:0]{index=0}
 ```
