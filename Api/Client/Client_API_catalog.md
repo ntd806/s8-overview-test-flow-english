@@ -1,5 +1,3 @@
-Here is your translated `.md` content (references removed, no additions or omissions):
-
 ---
 
 # VinPlayPortal API Documentation
