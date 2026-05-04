@@ -6,10 +6,6 @@ services:
     working_dir: /workspace
     env_file:
       - .env
-    environment:
-      BACAY_WS_URL: ws://host.docker.internal:21044/websocket
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ..:/workspace
     command: ["node", "scripts/frontend-bacay-client-example.js"]
