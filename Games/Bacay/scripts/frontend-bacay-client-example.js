@@ -18,6 +18,7 @@
 const BacayCmd = {
   LOGIN: 1,
   JOIN_BY_BET: 3001,
+  JOIN_FAIL: 3004,
   ROOM_LIST: 3014,
   JOIN_BY_ROOM_ID: 3015,
 
@@ -44,6 +45,23 @@ const BacayCmd = {
   NEW_USER_JOIN: 3121,
   NOTIFY_USER_GET_JACKPOT: 3122,
   CMD_SEND_UPDATE_MATCH: 3123,
+};
+
+const JoinFailCode = {
+  1: "INFO_ERROR",
+  2: "ROOM_ERROR",
+  3: "MONEY_ERROR",
+  4: "JOIN_ERROR",
+  5: "JOIN_TIME_ERROR",
+  6: "SYSTEM_MAINTAIN_ERROR",
+  7: "ROOM_NOT_FOUND",
+  8: "WRONG_PASSWORD",
+  9: "ROOM_FULL",
+  10: "BAN_BY_BOSS",
+  11: "INFO_CREATE_ERROR",
+  12: "LEVEL_ERROR",
+  13: "FULL_BOARD_ERROR",
+  14: "LOCK_CREATE_ROOM",
 };
 
 class BacayFrontendClient {
@@ -74,6 +92,7 @@ class BacayFrontendClient {
       onLoginSuccess: options.onLoginSuccess || (() => {}),
       onLoginError: options.onLoginError || (() => {}),
       onJoinSuccess: options.onJoinSuccess || (() => {}),
+      onJoinError: options.onJoinError || (() => {}),
       onReconnectInfo: options.onReconnectInfo || (() => {}),
       onEndGame: options.onEndGame || (() => {}),
       onUpdateMatch: options.onUpdateMatch || (() => {}),
@@ -247,6 +266,13 @@ class BacayFrontendClient {
     if (cmd === BacayCmd.JOIN_ROOM_SUCCESS) {
       this.state.joined = true;
       this.handlers.onJoinSuccess(packet, rawBytes);
+      return;
+    }
+
+    if (cmd === BacayCmd.JOIN_FAIL) {
+      const errorCode = rawBytes.length > 3 ? rawBytes[3] : 0;
+      const errorName = JoinFailCode[errorCode] || `UNKNOWN_${errorCode}`;
+      this.handlers.onJoinError(errorCode, errorName, packet, rawBytes);
       return;
     }
 
@@ -515,6 +541,10 @@ function createDemoClient(config) {
         demoClient.sendDangKyThoatPhong();
       }
     },
+    onJoinError(errorCode, errorName) {
+      console.error(`[join] failed cmd=3004 error=${errorCode} name=${errorName}`);
+      console.error("[join] expected working local config: moneyType=0 maxUserPerRoom=8 moneyBet=1000 rule=0");
+    },
     onReconnectInfo() {
       console.log("[sync] received 3110 THONG_TIN_BAN_CHOI");
     },
@@ -602,6 +632,7 @@ globalScope.BacayFrontendClient = BacayFrontendClient;
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     BacayCmd,
+    JoinFailCode,
     BacayFrontendClient,
     encodeWsPacket,
     encodeBzString,
