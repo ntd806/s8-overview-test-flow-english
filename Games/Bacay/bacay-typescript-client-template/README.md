@@ -48,6 +48,37 @@ npm install
 npm run build
 ```
 
+## Docker Check
+
+Run the connectivity and join-room check with your existing environment variables:
+
+```bash
+docker build -t bacay-client-check .
+docker run --rm --env-file .env bacay-client-check
+```
+
+Or run with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+The console log now prints each milestone in order:
+
+- load env
+- create client
+- connect socket
+- login success
+- join room success
+
+Optional env vars:
+
+- `BACAY_TIMEOUT_MS` to fail if join does not complete in time
+- `BACAY_MONEY_TYPE`
+- `BACAY_MAX_USER_PER_ROOM`
+- `BACAY_MONEY_BET`
+- `BACAY_RULE`
+
 ---
 
 ## Basic Usage
