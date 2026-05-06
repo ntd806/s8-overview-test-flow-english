@@ -61,6 +61,10 @@ const client = new BacayFrontendClient({
       console.log("[join] received 3118 JOIN_ROOM_SUCCESS");
     },
 
+    onJoinError(error, detail) {
+      console.error("[join] failed", error.message, detail);
+    },
+
     onReconnectInfo(packet) {
       console.log("[sync] received 3110 THONG_TIN_BAN_CHOI", packet);
     },

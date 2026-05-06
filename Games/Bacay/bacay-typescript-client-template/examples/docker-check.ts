@@ -109,6 +109,12 @@ const client = new BacayFrontendClient({
       client.disconnect();
       process.exit(0);
     },
+    onJoinError(error, detail) {
+      console.error(`[join] failed ${error.message}`);
+      console.error(
+        `[join] detail code=${detail.joinFailCode} reason=${detail.joinFailReason}`
+      );
+    },
     onReconnectStart(attempt, delayMs) {
       logInfo(`reconnect attempt=${attempt} delay=${delayMs}ms`);
     },

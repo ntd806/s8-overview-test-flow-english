@@ -143,6 +143,7 @@ client.connect();
 | `SOCKET_NOT_OPEN` | Tried to send while socket is not open |
 | `NOT_JOINED_ROOM` | Tried to send game command before joining |
 | `LOGIN_FAILED` | Socket login failed |
+| `JOIN_FAILED` | Socket join room failed |
 | `MAX_RECONNECT_ATTEMPTS` | Reconnect attempts exceeded |
 | `PACKET_DECODE_ERROR` | Incoming packet could not be decoded |
 | `UNKNOWN_ERROR` | Unknown client error |
