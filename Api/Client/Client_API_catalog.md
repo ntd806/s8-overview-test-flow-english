@@ -397,7 +397,8 @@ Request:
 
 ```json
 {
-  "agentTransactionId": "TXN-001"
+  "operatorCode": "OP001",
+  "transactionId": "TXN-001"
 }
 ```
 

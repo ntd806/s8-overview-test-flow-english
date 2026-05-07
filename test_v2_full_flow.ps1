@@ -33,6 +33,7 @@ $GAME_ID  = if ($env:GAME_ID) { $env:GAME_ID } else { "bacay" }
 
 $DEPOSIT_AMOUNT  = if ($env:DEPOSIT_AMOUNT) { [int]$env:DEPOSIT_AMOUNT } else { 10000 }
 $WITHDRAW_AMOUNT = if ($env:WITHDRAW_AMOUNT) { [int]$env:WITHDRAW_AMOUNT } else { 3000 }
+$ASYNC_WAIT_SECONDS = if ($env:ASYNC_WAIT_SECONDS) { [int]$env:ASYNC_WAIT_SECONDS } else { 2 }
 
 $RUN_SUFFIX = [int][double]::Parse((Get-Date -UFormat %s))
 $USER_NAME  = "curlv2_$RUN_SUFFIX"
@@ -235,6 +236,56 @@ Write-Host "Actual:   $FINAL_BALANCE"
 
 if ($FINAL_BALANCE -ne $EXPECTED) {
     Write-Host "Balance mismatch"
+    exit 1
+}
+
+# =========================
+# 8. GET PAYMENT TRANSACTION - DEPOSIT
+# =========================
+
+Write-Host ""
+Write-Host "Waiting ${ASYNC_WAIT_SECONDS}s for async transaction history..."
+Start-Sleep -Seconds $ASYNC_WAIT_SECONDS
+
+$DEPOSIT_HISTORY = Call-Api "8. Get payment transaction (deposit)" "$BASE/api/v2/4042" @{
+    operatorCode  = $OP
+    transactionId = $TXN
+} $AUTH_HEADERS
+
+$DEPOSIT_PAYMENT = @($DEPOSIT_HISTORY.data)[0]
+
+if (-not $DEPOSIT_PAYMENT) {
+    Write-Host "4042 deposit returned empty data"
+    Print-Json $DEPOSIT_HISTORY
+    exit 1
+}
+
+if ($DEPOSIT_PAYMENT.type -ne "DEPOSIT" -or [int]$DEPOSIT_PAYMENT.amount -ne $DEPOSIT_AMOUNT -or $DEPOSIT_PAYMENT.status -ne "SUCCESS") {
+    Write-Host "4042 deposit mismatch"
+    Print-Json $DEPOSIT_PAYMENT
+    exit 1
+}
+
+# =========================
+# 9. GET PAYMENT TRANSACTION - WITHDRAW
+# =========================
+
+$WITHDRAW_HISTORY = Call-Api "9. Get payment transaction (withdraw)" "$BASE/api/v2/4042" @{
+    operatorCode  = $OP
+    transactionId = $WITHDRAW_TXN
+} $AUTH_HEADERS
+
+$WITHDRAW_PAYMENT = @($WITHDRAW_HISTORY.data)[0]
+
+if (-not $WITHDRAW_PAYMENT) {
+    Write-Host "4042 withdraw returned empty data"
+    Print-Json $WITHDRAW_HISTORY
+    exit 1
+}
+
+if ($WITHDRAW_PAYMENT.type -ne "WITHDRAW" -or [int]$WITHDRAW_PAYMENT.amount -ne $WITHDRAW_AMOUNT -or $WITHDRAW_PAYMENT.status -ne "SUCCESS") {
+    Write-Host "4042 withdraw mismatch"
+    Print-Json $WITHDRAW_PAYMENT
     exit 1
 }
 

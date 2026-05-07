@@ -5,4 +5,6 @@ services:
       dockerfile: Dockerfile
     env_file:
       - .env
+    volumes:
+      - ./logs:/app/logs
     container_name: bacay-client-check

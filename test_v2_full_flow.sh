@@ -482,10 +482,10 @@ if [ "$CREATE_SUCCESS" != "true" ]; then
     call_api_no_assert \
       "3d. Probe payment history route on local host" \
       "/4042" \
-      "{\"agentTransactionId\":\"$DEPOSIT_TXN\"}" \
+      "{\"operatorCode\":\"$OP\",\"transactionId\":\"$DEPOSIT_TXN\"}" \
       -H "Authorization: Bearer $ACCESS_TOKEN"
     if printf "%s" "$LAST_RESPONSE" | grep -Fq '"data":[]'; then
-      log_info "4042 returned empty array, accepted as local-host behavior."
+      log_warning "4042 returned success with empty data; this is local-host behavior but diverges from the official spec, which expects 3011 for a missing transaction."
     fi
 
     call_api_no_assert \
@@ -707,8 +707,17 @@ sleep "$ASYNC_WAIT_SECONDS"
 call_api \
   "12. Get payment transaction (deposit)" \
   "/4042" \
-  "{\"agentTransactionId\":\"$DEPOSIT_TXN\"}" \
+  "{\"operatorCode\":\"$OP\",\"transactionId\":\"$DEPOSIT_TXN\"}" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
+
+if printf "%s" "$LAST_RESPONSE" | grep -Fq '"data":[]'; then
+  log_line "[FAIL] Payment transaction deposit data"
+  log_line "4042 returned empty data; expected deposit transaction ${DEPOSIT_TXN}."
+  echo
+  echo "FAILED at step: Payment transaction deposit data"
+  echo "4042 returned empty data; expected deposit transaction ${DEPOSIT_TXN}."
+  exit 1
+fi
 
 PAYMENT_TYPE="$(json_get_string "$LAST_RESPONSE" "type")"
 PAYMENT_STATUS="$(json_get_string "$LAST_RESPONSE" "status")"
@@ -765,8 +774,17 @@ fi
 call_api \
   "14. Get payment transaction (withdraw)" \
   "/4042" \
-  "{\"agentTransactionId\":\"$WITHDRAW_TXN\"}" \
+  "{\"operatorCode\":\"$OP\",\"transactionId\":\"$WITHDRAW_TXN\"}" \
   -H "Authorization: Bearer $ACCESS_TOKEN"
+
+if printf "%s" "$LAST_RESPONSE" | grep -Fq '"data":[]'; then
+  log_line "[FAIL] Payment transaction withdraw data"
+  log_line "4042 returned empty data; expected withdraw transaction ${WITHDRAW_TXN}."
+  echo
+  echo "FAILED at step: Payment transaction withdraw data"
+  echo "4042 returned empty data; expected withdraw transaction ${WITHDRAW_TXN}."
+  exit 1
+fi
 
 WITHDRAW_PAYMENT_TYPE="$(json_get_string "$LAST_RESPONSE" "type")"
 WITHDRAW_PAYMENT_STATUS="$(json_get_string "$LAST_RESPONSE" "status")"

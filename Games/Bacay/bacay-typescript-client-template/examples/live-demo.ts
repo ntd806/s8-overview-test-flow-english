@@ -120,9 +120,11 @@ const userMeta: DemoUserMeta = {
 const logDir = path.resolve(getOptionalEnv("BACAY_LOG_DIR", "logs"));
 const defaultLogName = `${traceId}.log`;
 const logFile = path.join(logDir, getOptionalEnv("BACAY_LOG_FILE", defaultLogName));
+const textLogFile = logFile.replace(/\.log$/i, ".txt");
 
 fs.mkdirSync(logDir, { recursive: true });
 const logStream = fs.createWriteStream(logFile, { flags: "a" });
+const textLogStream = fs.createWriteStream(textLogFile, { flags: "a" });
 
 let packetCount = 0;
 let round = 0;
@@ -161,7 +163,36 @@ function writeLog(event: string, data?: Record<string, unknown>): void {
 
   const line = JSON.stringify(record);
   logStream.write(`${line}\n`);
+  textLogStream.write(formatTextLog(record));
   console.log(line);
+}
+
+function formatTextLog(record: DemoLogRecord): string {
+  const lines = [
+    `[${record.ts}] event=${record.event}`,
+    `traceId=${record.traceId} pid=${record.pid}`,
+    `nickname=${record.nickname} sessionKeySuffix=${record.sessionKeySuffix}`,
+    `wsUrl=${record.wsUrl}`,
+    `user userId=${record.user.userId || "-"} username=${record.user.username || "-"} displayName=${record.user.displayName || "-"} dbPlayerId=${record.user.dbPlayerId || "-"} deviceId=${record.user.deviceId || "-"} ipAddress=${record.user.ipAddress || "-"} platform=${record.user.platform || "-"}`,
+    `room moneyType=${record.roomConfig.moneyType} maxUserPerRoom=${record.roomConfig.maxUserPerRoom} moneyBet=${record.roomConfig.moneyBet} rule=${record.roomConfig.rule}`,
+    `state connected=${record.state.connected} joined=${record.state.joined} round=${record.state.round} packets=${record.state.packets}`,
+  ];
+
+  if (record.data && Object.keys(record.data).length > 0) {
+    lines.push("data:");
+    for (const [key, value] of Object.entries(record.data)) {
+      lines.push(`  - ${key}: ${formatTextValue(value)}`);
+    }
+  }
+
+  return `${lines.join("\n")}\n\n`;
+}
+
+function formatTextValue(value: unknown): string {
+  if (value === null || value === undefined) return String(value);
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return JSON.stringify(value);
 }
 
 function logPacket(event: string, packet: BacayPacket): void {
@@ -200,6 +231,7 @@ function safeAction(action: string, execute: () => void, extra?: Record<string, 
 
 writeLog("process_start", {
   logFile,
+  textLogFile,
   heartbeatMs,
   reconnectConfig,
   autoBet,
@@ -367,6 +399,7 @@ function shutdown(reason: string): void {
   writeLog("process_stop", { reason });
   client.disconnect();
   logStream.end();
+  textLogStream.end();
 }
 
 process.on("SIGINT", () => {
