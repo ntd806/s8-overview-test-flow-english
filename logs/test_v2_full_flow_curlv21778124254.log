@@ -1,0 +1,45 @@
+[WARN] HOST=127.0.0.1 uses a divergent legacy v2 profile. Overriding provided credentials with legacy43 defaults.
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-07 10:24:14
+BASE: http://127.0.0.1:8081/api/v2
+PORTAL_HOST: 127.0.0.1
+USER: curlv21778124254
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778124254.log
+======================================
+[PASS] Get access token
+[WARN] HOST=127.0.0.1 returned legacy token scope read,write; continuing because this is an accepted local compatibility mode.
+
+==============================
+2. Refresh access token
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4002
+Request body:
+{"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA3MTYyNTQ5MTQsImlhdCI6MTc3ODEyNDI1NDkxNCwianRpIjoiYTJkZWNjZDYtN2RhMi00YzFkLWJlMDktNWE0NmQ0OTQwZWYyIn0.XbZIEsqoXw7c0f9PRH8i6_ar4jbeSbyTOuke2LdJyqQ"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778124254974,"data":{"accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiYXVkIjoiZ2FtZS1hcGkiLCJzY29wZSI6InJlYWQsd3JpdGUiLCJpc3MiOiJhcGkudmlucGxheS5jb20iLCJleHAiOjE3NzgxMjc4NTQ5NzQsIm9wZXJhdG9yQ29kZSI6ImRlZmF1bHQiLCJpYXQiOjE3NzgxMjQyNTQ5NzQsImp0aSI6IjU3MWVkMmNkLTk2MmUtNGUxYS1iYjRlLTY5NmI2OWFhYzVlMCJ9.yIm-53jJGTYK6delyxQG6ibLz2Vnzd0c0Zrndnpr0z8","refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA3MTYyNTQ5NzQsImlhdCI6MTc3ODEyNDI1NDk3NCwianRpIjoiNjgyYmIxYTEtNGZmMy00ZDEyLTk0ZTEtM2U2MjI4MGZmZWMzIn0.cfmmAANFfbdpjEXDk06gUVSKSNRkjPD4LfDcUoLbHvo","tokenType":"Bearer","expiresIn":3600,"scope":"read,write"},"metadata":{"processingTime":1}}
+[PASS] 2. Refresh access token
+
+==============================
+3. Create account
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4011
+Request body:
+{"operatorCode":"default","username":"curlv21778124254","currency":"VND","country":"VN","language":"vi"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778124255132,"data":{"username":"curlv21778124254","accountId":"6548782","currency":"VND","balance":0,"createdAt":1778124255132,"status":"ACTIVE"},"metadata":{"processingTime":124}}
+[PASS] 3. Create account
+
+==============================
+4. Check initial balance
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4012
+Request body:
+{"operatorCode":"default","username":"curlv21778124254"}
+Response body:
+{"success":false,"errorCode":"5000","errorMessage":"Database connection error","timestamp":1778124255183,"metadata":{}}
+[FAIL] 4. Check initial balance
+Response:
+{"success":false,"errorCode":"5000","errorMessage":"Database connection error","timestamp":1778124255183,"metadata":{}}

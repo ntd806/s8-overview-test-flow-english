@@ -1,0 +1,12 @@
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-06 21:21:17
+BASE: http://43.207.3.134:8081/api/v2
+USER: curlv21778077277
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778077277.log
+======================================
+[FAIL] Get access token
+Response:
+{"success":false,"errorCode":"1001","errorMessage":"Invalid operator code or API key","timestamp":1778077278005,"metadata":{}}

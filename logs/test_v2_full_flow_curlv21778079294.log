@@ -1,0 +1,117 @@
+[WARN] HOST=127.0.0.1 uses a divergent legacy v2 profile. Overriding provided credentials with legacy43 defaults.
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-06 21:54:54
+BASE: http://127.0.0.1:8081/api/v2
+PORTAL_HOST: 127.0.0.1
+USER: curlv21778079294
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778079294.log
+======================================
+[PASS] Get access token
+[WARN] HOST=127.0.0.1 returned legacy token scope read,write; continuing because this is an accepted local compatibility mode.
+
+==============================
+2. Refresh access token
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4002
+Request body:
+{"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA2NzEyOTQ0NDksImlhdCI6MTc3ODA3OTI5NDQ0OSwianRpIjoiNTg3Zjk0N2YtNjExMi00MGIxLTk1NjAtMDZkY2IzZDNkNjRjIn0.zyh02VOglR0BqyRPvM8QG4Sa11vLK1HmKKWIhqvO9Co"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079294515,"data":{"accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiYXVkIjoiZ2FtZS1hcGkiLCJzY29wZSI6InJlYWQsd3JpdGUiLCJpc3MiOiJhcGkudmlucGxheS5jb20iLCJleHAiOjE3NzgwODI4OTQ1MTUsIm9wZXJhdG9yQ29kZSI6ImRlZmF1bHQiLCJpYXQiOjE3NzgwNzkyOTQ1MTUsImp0aSI6ImFmYzY0Y2ZiLTlhYTktNDRmNC05ZDVmLWYyNTYxNWM5MGM3OSJ9.nuwsO680eaUk8zdpUhnc13OJGVXvNdsulffojNUfmPI","refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA2NzEyOTQ1MTUsImlhdCI6MTc3ODA3OTI5NDUxNSwianRpIjoiY2MxZjI3ZDUtYmY3NS00NjM3LWEzMTctNjRiNTM5MDU5YjJjIn0.7tEapnbMzaDfpYfOPgUws0XZqNhD7pkh7dM7F84pwbY","tokenType":"Bearer","expiresIn":3600,"scope":"read,write"},"metadata":{"processingTime":2}}
+[PASS] 2. Refresh access token
+
+==============================
+3. Create account
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4011
+Request body:
+{"operatorCode":"default","username":"curlv21778079294","currency":"VND","country":"VN","language":"vi"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079294653,"data":{"username":"curlv21778079294","accountId":"6548781","currency":"VND","balance":0,"createdAt":1778079294653,"status":"ACTIVE"},"metadata":{"processingTime":66}}
+[PASS] 3. Create account
+
+==============================
+4. Check initial balance
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4012
+Request body:
+{"operatorCode":"default","username":"curlv21778079294"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079294736,"data":{"username":"curlv21778079294","accountId":"6548781","currency":"VND","balance":0,"availableBalance":0,"lockedBalance":0,"lastUpdated":1778079294736},"metadata":{"processingTime":37}}
+[PASS] 4. Check initial balance
+
+==============================
+5. Deposit
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4021
+Request body:
+{"operatorCode":"default","username":"curlv21778079294","transactionId":"dep_curlv21778079294","type":"DEPOSIT","amount":10000,"currency":"VND","description":"Deposit from main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079294983,"data":{"transactionId":"dep_curlv21778079294","username":"curlv21778079294","type":"DEPOSIT","amount":10000,"currency":"VND","balanceBefore":0,"balanceAfter":10000,"status":"SUCCESS","processedAt":1778079294979},"metadata":{"requestId":"req_dep_curlv21778079294","processingTime":193}}
+[PASS] 5. Deposit
+
+==============================
+6. Deposit idempotency
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4021
+Request body:
+{"operatorCode":"default","username":"curlv21778079294","transactionId":"dep_curlv21778079294","type":"DEPOSIT","amount":10000,"currency":"VND","description":"Deposit from main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079295052,"data":{"transactionId":"dep_curlv21778079294","username":"curlv21778079294","type":"DEPOSIT","amount":10000,"currency":"VND","balanceBefore":10000,"balanceAfter":20000,"status":"SUCCESS","processedAt":1778079295050},"metadata":{"requestId":"req_dep_curlv21778079294","processingTime":21}}
+[PASS] 6. Deposit idempotency
+[WARN] Idempotency mismatch: repeated 4021 with same X-Request-ID still changed balance on this backend.
+
+==============================
+7. Check balance after deposit
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4012
+Request body:
+{"operatorCode":"default","username":"curlv21778079294"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079295104,"data":{"username":"curlv21778079294","accountId":"6548781","currency":"VND","balance":20000,"availableBalance":20000,"lockedBalance":0,"lastUpdated":1778079295104},"metadata":{"processingTime":2}}
+[PASS] 7. Check balance after deposit
+
+==============================
+8. Launch game
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4031
+Request body:
+{"operatorCode":"default","username":"curlv21778079294","gameId":"PORTAL","platform":"WEB","language":"vi","returnUrl":"https://example.com/lobby"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079295165,"data":{"launchUrl":"http://localhost:8081/game/launch/?un\u003ddefault_curlv21778079294\u0026token\u003d2925a7490bf4079403485c115500c582\u0026game\u003dPORTAL","sessionToken":"2925a7490bf4079403485c115500c582","expiresIn":10800,"expiresAt":1778090095165,"gameInfo":{"gameId":"PORTAL","gameName":"Game PORTAL","provider":"VinPlay","platform":"WEB"}},"metadata":{"processingTime":12}}
+[PASS] 8. Launch game
+
+==============================
+9. Withdraw
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4021
+Request body:
+{"operatorCode":"default","username":"curlv21778079294","transactionId":"wd_curlv21778079294","type":"WITHDRAW","amount":3000,"currency":"VND","description":"Withdraw to main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079295237,"data":{"transactionId":"wd_curlv21778079294","username":"curlv21778079294","type":"WITHDRAW","amount":3000,"currency":"VND","balanceBefore":20000,"balanceAfter":17000,"status":"SUCCESS","processedAt":1778079295235},"metadata":{"requestId":"req_wd_curlv21778079294","processingTime":14}}
+[PASS] 9. Withdraw
+
+==============================
+10. Final balance
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4012
+Request body:
+{"operatorCode":"default","username":"curlv21778079294"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778079295280,"data":{"username":"curlv21778079294","accountId":"6548781","currency":"VND","balance":17000,"availableBalance":17000,"lockedBalance":0,"lastUpdated":1778079295280},"metadata":{"processingTime":1}}
+[PASS] 10. Final balance
+Waiting 2s for async transaction history...
+
+==============================
+12. Get payment transaction (deposit)
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4042
+Request body:
+{"agentTransactionId":"dep_curlv21778079294"}
+Response body:
+{"success":false,"errorCode":"1002","errorMessage":"agentTransactionId is required","timestamp":1778079297356,"metadata":{}}
+[FAIL] 12. Get payment transaction (deposit)
+Response:
+{"success":false,"errorCode":"1002","errorMessage":"agentTransactionId is required","timestamp":1778079297356,"metadata":{}}

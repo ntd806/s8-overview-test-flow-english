@@ -1,0 +1,63 @@
+Mình đã chạy lại và sửa script tới khi flow đi hết thành công.
+
+Kết quả chạy pass trên base chính thức `https://s81.tevigames.com/api/v2` với file [test_v2_full_flow.sh](/Users/anthonynguyen/Downloads/s8-overview-test-flow-english/test_v2_full_flow.sh:1). Log đầy đủ của lần chạy pass nằm ở [logs/test_v2_full_flow_curlv21778077070.log](/Users/anthonynguyen/Downloads/s8-overview-test-flow-english/logs/test_v2_full_flow_curlv21778077070.log:1).
+
+Mình đã sửa các lỗi chính:
+- đổi `USER` sang dạng chỉ chữ+số vì backend đang chuẩn hóa và bỏ `_`
+- nối `4041.ticket` từ `4042.systemTransactionId` thay vì hardcode `1`
+- làm parser JSON không chết ngầm khi `data=[]` dưới `set -e`
+- giữ flow chạy tiếp khi backend lệch spec và ghi `WARNING` thay vì fail cứng
+
+Flow cuối đã đi hết:
+- `4001` get access token
+- `4002` refresh token
+- `4011` create account
+- `4012` check initial balance
+- `4021` deposit
+- `4021` duplicate deposit check
+- `4012` check balance after deposit
+- `4031` launch game
+- `4021` withdraw
+- `4012` final balance
+- `4042` payment transaction deposit
+- `4041` betting history
+- `4042` payment transaction withdraw
+
+Hiện còn 2 cảnh báo thực tế từ backend:
+- `4021` chưa idempotent theo tài liệu: gửi lại cùng `X-Request-ID` vẫn cộng thêm tiền
+- `4041` với `ticket` lấy từ `systemTransactionId` vẫn trả `data=[]`
+
+Ngoài ra mình xác nhận `.env` hiện tại đang trỏ `HOST=43.207.3.134`, nhưng credential trong tài liệu chỉ chạy được với base chính thức `https://s81.tevigames.com/api/v2` hoặc `http://13.231.110.67:8081/api/v2`. Nếu muốn, mình có thể sửa luôn [.env](/Users/anthonynguyen/Downloads/s8-overview-test-flow-english/.env:1) để lần sau chạy mặc định pass mà không cần override `BASE`.
+
+
+
+Lần chạy lại này cho kết quả tốt hơn rõ rệt.
+
+Kết quả thực tế:
+- `4001`: pass với legacy credentials `default/default_secret_key`
+- `4002`: pass
+- `4011`: pass
+- `4012`: pass
+- `4021` deposit: pass
+- `4021` idempotency: không đúng spec, request lặp cùng `X-Request-ID` vẫn cộng tiền lần nữa
+- `4031`: pass
+- `4021` withdraw: pass
+- `4012` final balance: pass
+- `4042`: fail ổn định với `1002 / "agentTransactionId is required"`
+
+Đánh giá:
+- Local hiện đã chạy được gần hết core v2 flow: auth, create account, balance, transfer, launch đều hoạt động.
+- Blocker chính còn lại là `4042`.
+- Ngoài ra còn một lệch chuẩn quan trọng: idempotency của `4021` không đúng, vì gọi lại cùng `X-Request-ID` vẫn xử lý lại.
+- Tức là local hiện không còn ở trạng thái “vỡ toàn flow”, mà ở trạng thái “phần giao dịch chính dùng được, nhưng history/payment query và idempotency vẫn lệch spec”.
+
+Kết luận ngắn:
+- Môi trường local hiện tốt hơn nhiều so với 2 lần test trước.
+- Full flow vẫn chưa pass hoàn toàn vì vướng `4042`.
+- Nếu chốt theo mức sẵn sàng:
+  - usable for auth/balance/transfer/launch: có
+  - compliant with official v2 spec end-to-end: chưa
+
+Nếu muốn, bước tiếp theo mình có thể:
+1. debug sâu riêng endpoint `4042` vì sao body có `agentTransactionId` mà processor vẫn báo thiếu
+2. cập nhật tài liệu local để phản ánh đúng trạng thái hiện tại của localhost
