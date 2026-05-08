@@ -1,0 +1,88 @@
+[WARN] HOST=127.0.0.1 uses a divergent legacy v2 profile. Overriding provided credentials with legacy43 defaults.
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-06 21:47:57
+BASE: http://127.0.0.1:8081/api/v2
+PORTAL_HOST: 127.0.0.1
+USER: curlv21778078877
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778078877.log
+======================================
+[PASS] Get access token
+[WARN] HOST=127.0.0.1 returned legacy token scope read,write; continuing because this is an accepted local compatibility mode.
+
+==============================
+2. Refresh access token
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4002
+Request body:
+{"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA2NzA4Nzc1NTUsImlhdCI6MTc3ODA3ODg3NzU1NSwianRpIjoiMDdlYjJjM2UtNTk1Yi00YjMwLTgxZTYtNWVlZWM0OTBkMWJjIn0.YXBeo7buMsZzOw1Gk7HUufImnz_CcK7ef8Ol1Xoi-v4"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778078877615,"data":{"accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiYXVkIjoiZ2FtZS1hcGkiLCJzY29wZSI6InJlYWQsd3JpdGUiLCJpc3MiOiJhcGkudmlucGxheS5jb20iLCJleHAiOjE3NzgwODI0Nzc2MTUsIm9wZXJhdG9yQ29kZSI6ImRlZmF1bHQiLCJpYXQiOjE3NzgwNzg4Nzc2MTUsImp0aSI6Ijk3OTE2YjJmLTM1YzctNGMzNy1iZGUzLTE4ODQ5Nzc1ZGZlNCJ9.lR1JEkseHc_mPgPeXDBzZZefJS6fSlULhmk1ib7Q6eM","refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA2NzA4Nzc2MTUsImlhdCI6MTc3ODA3ODg3NzYxNSwianRpIjoiNTk1YjA3ZWMtZDE5ZC00NDBmLThhY2MtYzhiZWVhMmE4OGQyIn0.cb00TdA6xi6qYDg-gloI2UTwSQot80ZFzNsZ-w2_n5c","tokenType":"Bearer","expiresIn":3600,"scope":"read,write"},"metadata":{"processingTime":2}}
+[PASS] 2. Refresh access token
+
+==============================
+3. Create account
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4011
+Request body:
+{"operatorCode":"default","username":"curlv21778078877","currency":"VND","country":"VN","language":"vi"}
+Response body:
+{"success":false,"errorCode":"5000","errorMessage":"An unexpected error occurred","timestamp":1778078877662,"metadata":{}}
+[WARN] HOST=127.0.0.1 is environment-divergent from the official v2 spec; auth works only with legacy credentials and create-account 4011 is broken server-side.
+
+==============================
+3a. Probe get balance route with nonexistent user
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4012
+Request body:
+{"operatorCode":"default","username":"curlv21778078877"}
+Response body:
+{"success":false,"errorCode":"5000","errorMessage":"Database connection error","timestamp":1778078877700,"metadata":{}}
+
+==============================
+3b. Probe transfer route with nonexistent user
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4021
+Request body:
+{"operatorCode":"default","username":"curlv21778078877","transactionId":"dep_curlv21778078877","type":"DEPOSIT","amount":10000,"currency":"VND","description":"Probe deposit"}
+Response body:
+{"success":false,"errorCode":"5000","errorMessage":"Database connection error","timestamp":1778078877731,"metadata":{}}
+
+==============================
+3c. Probe launch route with nonexistent user
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4031
+Request body:
+{"operatorCode":"default","username":"curlv21778078877","gameId":"PORTAL","platform":"WEB","language":"vi","returnUrl":"https://example.com/lobby"}
+Response body:
+{"success":false,"errorCode":"5000","errorMessage":"Database connection error","timestamp":1778078877758,"metadata":{}}
+
+==============================
+3d. Probe payment history route on local host
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4042
+Request body:
+{"agentTransactionId":"dep_curlv21778078877"}
+Response body:
+{"success":false,"errorCode":"1002","errorMessage":"agentTransactionId is required","timestamp":1778078877785,"metadata":{}}
+
+==============================
+3e. Probe betting history route on local host
+==============================
+API: POST http://127.0.0.1:8081/api/v2/4041
+Request body:
+{"ticket":123456789,"limit":20}
+Response body:
+{"success":false,"errorCode":"5000","errorMessage":"Timed out after 30000 ms while waiting for a server that matches ReadPreferenceServerSelector{readPreference\u003dprimary}. Client view of cluster state is {type\u003dUNKNOWN, servers\u003d[{address\u003dmongodb:27017, type\u003dUNKNOWN, state\u003dCONNECTING, exception\u003d{com.mongodb.MongoSocketException: mongodb: Name or service not known}, caused by {java.net.UnknownHostException: mongodb: Name or service not known}}]","timestamp":1778078907828,"metadata":{}}
+
+======================================
+FLOW BLOCKED BY ENVIRONMENT
+======================================
+HOST=127.0.0.1 is environment-divergent from the official v2 spec; auth works only with legacy credentials and create-account 4011 is broken server-side.
+BASE: http://127.0.0.1:8081/api/v2
+USER: curlv21778078877
+WARNING_COUNT: 3
+Completed at: 2026-05-06 21:48:27
+======================================

@@ -1,0 +1,11 @@
+[WARN] HOST=127.0.0.1 uses a divergent legacy v2 profile. Overriding provided credentials with legacy43 defaults.
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-07 10:14:06
+BASE: http://127.0.0.1:8081/api/v2
+PORTAL_HOST: 127.0.0.1
+USER: curlv21778123646
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778123646.log
+======================================

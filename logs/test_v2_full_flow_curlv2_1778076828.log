@@ -1,0 +1,33 @@
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-06 21:13:48
+BASE: https://s81.tevigames.com/api/v2
+USER: curlv2_1778076828
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv2_1778076828.log
+======================================
+[PASS] Get access token
+
+==============================
+2. Refresh access token
+==============================
+API: POST https://s81.tevigames.com/api/v2/4002
+Request body:
+{"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImlzcyI6ImFwaS52aW5wbGF5LmNvbSIsInR5cGUiOiJyZWZyZXNoIiwiZXhwIjoxNzgwNjY4ODMwMjA0LCJpYXQiOjE3NzgwNzY4MzAyMDQsImp0aSI6IjFmODBjMGE2LWI1ZjItNDg5Ni04NzZlLTk3ZjlhOGUyYjU3OSJ9.79l8awkgElV__k7s2Ec-XwJr5bg2KLpeB2erRBRbUiI"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076831149,"data":{"accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImF1ZCI6ImdhbWUtYXBpIiwic2NvcGUiOiJnYW1lOnJlYWQsZ2FtZTp3cml0ZSxiYWxhbmNlOnJlYWQsdHJhbnNmZXI6d3JpdGUiLCJpc3MiOiJhcGkudmlucGxheS5jb20iLCJleHAiOjE3NzgwODA0MzExNDksIm9wZXJhdG9yQ29kZSI6Ik9QMDAxIiwiaWF0IjoxNzc4MDc2ODMxMTQ5LCJqdGkiOiJlNzczZTZkMy0wOGZjLTQ1MzctYWI3Zi00ZjZkYjA2YTczYWYifQ.mOnTr0C5WwdcyCWTnCutpHAy6hGXfmLjbgpj6H-XF4g","refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImlzcyI6ImFwaS52aW5wbGF5LmNvbSIsInR5cGUiOiJyZWZyZXNoIiwiZXhwIjoxNzgwNjY4ODMxMTQ5LCJpYXQiOjE3NzgwNzY4MzExNDksImp0aSI6IjYyNTIxNzM4LWRmZmMtNDc3NS04NzM4LWY1MGU1ZTMxMzQzNiJ9.AHOs8a9JUdzys8rCnXnNvOwIoKE8mEZPm1HOa7vm4-w","tokenType":"Bearer","expiresIn":3600,"scope":"game:read,game:write,balance:read,transfer:write"},"metadata":{"processingTime":1}}
+[PASS] 2. Refresh access token
+
+==============================
+3. Create account
+==============================
+API: POST https://s81.tevigames.com/api/v2/4011
+Request body:
+{"operatorCode":"OP001","username":"curlv2_1778076828","currency":"VND","country":"VN","language":"vi"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076833658,"data":{"username":"curlv2778076828","accountId":"6548767","currency":"VND","balance":0,"createdAt":1778076833658,"status":"ACTIVE"},"metadata":{"processingTime":20}}
+[PASS] 3. Create account
+[FAIL] Create account username
+Expected: curlv2_1778076828
+Actual:   curlv2778076828

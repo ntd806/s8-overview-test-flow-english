@@ -4,6 +4,8 @@ import {
   BacayClientState,
   BacayCmd,
   BacayPacket,
+  JoinFailCode,
+  JoinFailReason,
   ReconnectConfig,
 } from "./types";
 
@@ -22,6 +24,13 @@ const DEFAULT_RECONNECT: Required<ReconnectConfig> = {
   maxAttempts: 5,
   baseDelayMs: 1000,
   maxDelayMs: 10000,
+};
+
+const JOIN_FAIL_CODE_MAP: Record<JoinFailCode, JoinFailReason> = {
+  1: "INFO_ERROR",
+  2: "ROOM_ERROR",
+  3: "MONEY_ERROR",
+  4: "JOIN_ERROR",
 };
 
 export class BacayFrontendClient {
@@ -265,6 +274,27 @@ export class BacayFrontendClient {
       return;
     }
 
+    if (cmd === BacayCmd.JOIN_BY_BET || cmd === BacayCmd.JOIN_BY_ROOM_ID) {
+      const joinFailCode = packet.rawBytes[3] ?? -1;
+
+      if (joinFailCode !== 0) {
+        const joinFailReason = this.getJoinFailReason(joinFailCode);
+        const error = new BacayClientError(
+          "JOIN_FAILED",
+          `Join room failed with code=${joinFailCode} (${joinFailReason})`
+        );
+
+        this.options.handlers?.onJoinError?.(
+          error,
+          { joinFailCode, joinFailReason },
+          packet
+        );
+        this.emitError(error);
+      }
+
+      return;
+    }
+
     if (cmd === BacayCmd.THONG_TIN_BAN_CHOI) {
       this.options.handlers?.onReconnectInfo?.(packet);
       return;
@@ -361,5 +391,9 @@ export class BacayFrontendClient {
 
   private emitError(error: BacayClientError): void {
     this.options.handlers?.onError?.(error);
+  }
+
+  private getJoinFailReason(joinFailCode: number): JoinFailReason {
+    return JOIN_FAIL_CODE_MAP[joinFailCode as JoinFailCode] || "UNKNOWN_JOIN_ERROR";
   }
 }

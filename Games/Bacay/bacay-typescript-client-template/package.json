@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx examples/basic-usage.ts",
-    "check:server": "tsx examples/docker-check.ts"
+    "check:server": "tsx examples/docker-check.ts",
+    "demo:live": "tsx examples/live-demo.ts"
   },
   "dependencies": {},
   "devDependencies": {

@@ -2,9 +2,8 @@ import { BacayPacket } from "./types";
 
 export function encodeWsPacket(controllerId: number, actionId: number, body: Uint8Array): Uint8Array {
   const output = new Uint8Array(6 + body.length);
-  output[0] = 0x00;
-  output[1] = 0x00;
-  output[2] = 0x00;
+  output[0] = genPacketHeader(false, false);
+  writeUInt16BE(output, 1, output.length - 3);
   output[3] = controllerId & 0xff;
   writeUInt16BE(output, 4, actionId);
   output.set(body, 6);
@@ -72,6 +71,24 @@ export async function normalizeIncomingBytes(data: unknown): Promise<Uint8Array 
 
 export function readUInt16BE(bytes: Uint8Array, offset: number): number {
   return ((bytes[offset] << 8) | bytes[offset + 1]) >>> 0;
+}
+
+function genPacketHeader(bigSize: boolean, compress: boolean): number {
+  let header = 0;
+  header = setBit(header, 7, true);
+  header = setBit(header, 6, false);
+  header = setBit(header, 5, compress);
+  header = setBit(header, 4, true);
+  header = setBit(header, 3, bigSize);
+  return header;
+}
+
+function setBit(input: number, index: number, hasBit: boolean): number {
+  if (hasBit) {
+    return input | (1 << index);
+  }
+
+  return input & ~(1 << index);
 }
 
 function writeUInt16BE(bytes: Uint8Array, offset: number, value: number): void {

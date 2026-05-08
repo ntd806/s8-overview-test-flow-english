@@ -7,4 +7,5 @@ RUN npm ci
 
 COPY . .
 
-CMD ["npm", "run", "check:server"]
+# CMD ["npm", "run", "check:server"]
+CMD ["npm", "run", "demo:live"]

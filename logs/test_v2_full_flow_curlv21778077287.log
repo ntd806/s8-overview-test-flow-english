@@ -1,0 +1,32 @@
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-06 21:21:27
+BASE: http://43.207.3.134:8081/api/v2
+USER: curlv21778077287
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778077287.log
+======================================
+[PASS] Get access token
+
+==============================
+2. Refresh access token
+==============================
+API: POST http://43.207.3.134:8081/api/v2/4002
+Request body:
+{"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA2NjkyODc1NDcsImlhdCI6MTc3ODA3NzI4NzU0NywianRpIjoiMTRkYTFjZjUtYTVhNi00OGEyLWE3MGMtOGNhNWU1ZGNiYzRiIn0._NDOp1fxzOR62QKcKbaYk5hUL4bhk45jf19lehwhxs8"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778077287800,"data":{"accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiYXVkIjoiZ2FtZS1hcGkiLCJzY29wZSI6InJlYWQsd3JpdGUiLCJpc3MiOiJhcGkudmlucGxheS5jb20iLCJleHAiOjE3NzgwODA4ODc4MDAsIm9wZXJhdG9yQ29kZSI6ImRlZmF1bHQiLCJpYXQiOjE3NzgwNzcyODc4MDAsImp0aSI6ImJjMTJiMGZkLTI3MDAtNGNkNS04MmQ2LTEzMmE4ZTJiMzVlMCJ9.KOITgKgLqyEMj6znxje9vqYyZHogcd8l3PjmwfxMKmw","refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZWZhdWx0IiwiaXNzIjoiYXBpLnZpbnBsYXkuY29tIiwidHlwZSI6InJlZnJlc2giLCJleHAiOjE3ODA2NjkyODc4MDAsImlhdCI6MTc3ODA3NzI4NzgwMCwianRpIjoiNTdhNGEzODctYTlmYS00Y2Q1LWJhMzMtYzRjODZiOTA4NGEyIn0.1BM353-ZYgOpkCKKdnhYf7lmYu_Lhg_k2fmDLun7mc4","tokenType":"Bearer","expiresIn":3600,"scope":"read,write"},"metadata":{"processingTime":2}}
+[PASS] 2. Refresh access token
+
+==============================
+3. Create account
+==============================
+API: POST http://43.207.3.134:8081/api/v2/4011
+Request body:
+{"operatorCode":"default","username":"curlv21778077287","currency":"VND","country":"VN","language":"vi"}
+Response body:
+{"success":false,"errorCode":"5000","errorMessage":"An unexpected error occurred","timestamp":1778077288089,"metadata":{}}
+[FAIL] 3. Create account
+Response:
+{"success":false,"errorCode":"5000","errorMessage":"An unexpected error occurred","timestamp":1778077288089,"metadata":{}}

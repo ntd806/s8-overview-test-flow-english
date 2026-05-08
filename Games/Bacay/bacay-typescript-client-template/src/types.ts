@@ -68,9 +68,19 @@ export type BacayClientErrorCode =
   | "SOCKET_NOT_OPEN"
   | "NOT_JOINED_ROOM"
   | "LOGIN_FAILED"
+  | "JOIN_FAILED"
   | "MAX_RECONNECT_ATTEMPTS"
   | "PACKET_DECODE_ERROR"
   | "UNKNOWN_ERROR";
+
+export type JoinFailCode = 1 | 2 | 3 | 4;
+
+export type JoinFailReason =
+  | "INFO_ERROR"
+  | "ROOM_ERROR"
+  | "MONEY_ERROR"
+  | "JOIN_ERROR"
+  | "UNKNOWN_JOIN_ERROR";
 
 export class BacayClientError extends Error {
   public code: BacayClientErrorCode;
@@ -92,6 +102,11 @@ export type BacayClientHandlers = {
   onLoginSuccess?: (packet: BacayPacket) => void;
   onLoginError?: (error: BacayClientError, packet?: BacayPacket) => void;
   onJoinSuccess?: (packet: BacayPacket) => void;
+  onJoinError?: (
+    error: BacayClientError,
+    detail: { joinFailCode: number; joinFailReason: JoinFailReason },
+    packet?: BacayPacket
+  ) => void;
   onReconnectStart?: (attempt: number, delayMs: number) => void;
   onReconnectSuccess?: () => void;
   onReconnectFailed?: (error: BacayClientError) => void;

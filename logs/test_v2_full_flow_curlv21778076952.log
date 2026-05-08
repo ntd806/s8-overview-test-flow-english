@@ -1,0 +1,122 @@
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-06 21:15:52
+BASE: https://s81.tevigames.com/api/v2
+USER: curlv21778076952
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778076952.log
+======================================
+[PASS] Get access token
+
+==============================
+2. Refresh access token
+==============================
+API: POST https://s81.tevigames.com/api/v2/4002
+Request body:
+{"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImlzcyI6ImFwaS52aW5wbGF5LmNvbSIsInR5cGUiOiJyZWZyZXNoIiwiZXhwIjoxNzgwNjY4OTUzODEwLCJpYXQiOjE3NzgwNzY5NTM4MTAsImp0aSI6IjJlNDJkNDFjLTZlMWEtNDVkNi05MDQzLTBjYTFjY2ZlNDdkYSJ9.k_kkcyM_DNDxGNYs5bbuqZuj54u7hKfbk8sNPGwXN3E"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076955476,"data":{"accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImF1ZCI6ImdhbWUtYXBpIiwic2NvcGUiOiJnYW1lOnJlYWQsZ2FtZTp3cml0ZSxiYWxhbmNlOnJlYWQsdHJhbnNmZXI6d3JpdGUiLCJpc3MiOiJhcGkudmlucGxheS5jb20iLCJleHAiOjE3NzgwODA1NTU0NzYsIm9wZXJhdG9yQ29kZSI6Ik9QMDAxIiwiaWF0IjoxNzc4MDc2OTU1NDc2LCJqdGkiOiJhYmRhZmM5NC04M2EzLTRkY2ItOTcxNC0yZDU4NGI2MTRiMWUifQ.rKRIjK26PtqDo3B5BoeUuRTZ6GwYbole45FtzcH4ExA","refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImlzcyI6ImFwaS52aW5wbGF5LmNvbSIsInR5cGUiOiJyZWZyZXNoIiwiZXhwIjoxNzgwNjY4OTU1NDc2LCJpYXQiOjE3NzgwNzY5NTU0NzYsImp0aSI6ImMzODI2ODBiLTg1NDAtNDdiYy1hZjc1LTZlODU0MmE3ZGM3MSJ9.ZGBsKIZWQLf0vq1MGctUt5m3hym11bCq2EfSxcdpuOc","tokenType":"Bearer","expiresIn":3600,"scope":"game:read,game:write,balance:read,transfer:write"},"metadata":{"processingTime":1}}
+[PASS] 2. Refresh access token
+
+==============================
+3. Create account
+==============================
+API: POST https://s81.tevigames.com/api/v2/4011
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952","currency":"VND","country":"VN","language":"vi"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076956980,"data":{"username":"curlv21778076952","accountId":"6548770","currency":"VND","balance":0,"createdAt":1778076956980,"status":"ACTIVE"},"metadata":{"processingTime":10}}
+[PASS] 3. Create account
+
+==============================
+4. Check initial balance
+==============================
+API: POST https://s81.tevigames.com/api/v2/4012
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076957594,"data":{"username":"curlv21778076952","accountId":"6548770","currency":"VND","balance":0,"availableBalance":0,"lockedBalance":0,"lastUpdated":1778076957594},"metadata":{"processingTime":2}}
+[PASS] 4. Check initial balance
+
+==============================
+5. Deposit
+==============================
+API: POST https://s81.tevigames.com/api/v2/4021
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952","transactionId":"dep_curlv21778076952","type":"DEPOSIT","amount":10000,"currency":"VND","description":"Deposit from main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076960995,"data":{"transactionId":"dep_curlv21778076952","username":"curlv21778076952","type":"DEPOSIT","amount":10000,"currency":"VND","balanceBefore":0,"balanceAfter":10000,"status":"SUCCESS","processedAt":1778076960993},"metadata":{"requestId":"req_dep_curlv21778076952","processingTime":11}}
+[PASS] 5. Deposit
+
+==============================
+6. Deposit idempotency
+==============================
+API: POST https://s81.tevigames.com/api/v2/4021
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952","transactionId":"dep_curlv21778076952","type":"DEPOSIT","amount":10000,"currency":"VND","description":"Deposit from main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076961709,"data":{"transactionId":"dep_curlv21778076952","username":"curlv21778076952","type":"DEPOSIT","amount":10000,"currency":"VND","balanceBefore":10000,"balanceAfter":20000,"status":"SUCCESS","processedAt":1778076961707},"metadata":{"requestId":"req_dep_curlv21778076952","processingTime":12}}
+[PASS] 6. Deposit idempotency
+[WARN] Idempotency mismatch: repeated 4021 with same X-Request-ID still changed balance on this backend.
+
+==============================
+7. Check balance after deposit
+==============================
+API: POST https://s81.tevigames.com/api/v2/4012
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076963448,"data":{"username":"curlv21778076952","accountId":"6548770","currency":"VND","balance":20000,"availableBalance":20000,"lockedBalance":0,"lastUpdated":1778076963448},"metadata":{"processingTime":1}}
+[PASS] 7. Check balance after deposit
+
+==============================
+8. Launch game
+==============================
+API: POST https://s81.tevigames.com/api/v2/4031
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952","gameId":"PORTAL","platform":"WEB","language":"vi","returnUrl":"https://example.com/lobby"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076966158,"data":{"launchUrl":"https://s8.tevigames.com/?un\u003dcurlv21778076952_1\u0026token\u003d7ce3b23da6339395aff99a69cb5da948\u0026game\u003dPORTAL","sessionToken":"7ce3b23da6339395aff99a69cb5da948","expiresIn":10800,"expiresAt":1778087766158,"gameInfo":{"gameId":"PORTAL","gameName":"Game PORTAL","provider":"VinPlay","platform":"WEB"}},"metadata":{"processingTime":1}}
+[PASS] 8. Launch game
+
+==============================
+9. Withdraw
+==============================
+API: POST https://s81.tevigames.com/api/v2/4021
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952","transactionId":"wd_curlv21778076952","type":"WITHDRAW","amount":3000,"currency":"VND","description":"Withdraw to main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076972252,"data":{"transactionId":"wd_curlv21778076952","username":"curlv21778076952","type":"WITHDRAW","amount":3000,"currency":"VND","balanceBefore":20000,"balanceAfter":17000,"status":"SUCCESS","processedAt":1778076972250},"metadata":{"requestId":"req_wd_curlv21778076952","processingTime":11}}
+[PASS] 9. Withdraw
+
+==============================
+10. Final balance
+==============================
+API: POST https://s81.tevigames.com/api/v2/4012
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076952"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076980942,"data":{"username":"curlv21778076952","accountId":"6548770","currency":"VND","balance":17000,"availableBalance":17000,"lockedBalance":0,"lastUpdated":1778076980942},"metadata":{"processingTime":1}}
+[PASS] 10. Final balance
+Waiting 2s for async transaction history...
+
+==============================
+12. Get payment transaction (deposit)
+==============================
+API: POST https://s81.tevigames.com/api/v2/4042
+Request body:
+{"operatorCode":"OP001","transactionId":"dep_curlv21778076952"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076983906,"data":[{"transactionId":"dep_curlv21778076952","systemTransactionId":"27282","username":"curlv21778076952","accountId":"6548770","type":"DEPOSIT","amount":10000,"currency":"VND","balanceBefore":0,"balanceAfter":10000,"status":"SUCCESS","createdAt":"May 6, 2026, 9:16:00 PM","processedAt":"2026-05-06 21:16:00","description":"TransferMoney","metadata":{"transactionType":"DEPOSIT","fee":0,"paymentMethod":"TRANSFER"}}],"metadata":{"processingTime":2}}
+[PASS] 12. Get payment transaction (deposit)
+
+==============================
+13. Get betting history
+==============================
+API: POST https://s81.tevigames.com/api/v2/4041
+Request body:
+{"operatorCode":"OP001","ticket":27282}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076984932,"data":[],"metadata":{"processingTime":7}}
+[PASS] 13. Get betting history

@@ -1,0 +1,63 @@
+======================================
+V2 FULL SPEC TEST FLOW
+======================================
+Started at: 2026-05-06 21:14:04
+BASE: https://s81.tevigames.com/api/v2
+USER: curlv21778076844
+GAME_ID: PORTAL
+LOG_FILE: ./logs/test_v2_full_flow_curlv21778076844.log
+======================================
+[PASS] Get access token
+
+==============================
+2. Refresh access token
+==============================
+API: POST https://s81.tevigames.com/api/v2/4002
+Request body:
+{"refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImlzcyI6ImFwaS52aW5wbGF5LmNvbSIsInR5cGUiOiJyZWZyZXNoIiwiZXhwIjoxNzgwNjY4ODQ2MDMyLCJpYXQiOjE3NzgwNzY4NDYwMzIsImp0aSI6ImQ0MGMxZTU0LTU4MzUtNGE4OC1hNzE0LTg0OWRhYjNmYjAyMCJ9.bb4DonMYR3IT6Sk1hcpadl0EQSj2aomvhIt8z4-_pSQ"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076848424,"data":{"accessToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImF1ZCI6ImdhbWUtYXBpIiwic2NvcGUiOiJnYW1lOnJlYWQsZ2FtZTp3cml0ZSxiYWxhbmNlOnJlYWQsdHJhbnNmZXI6d3JpdGUiLCJpc3MiOiJhcGkudmlucGxheS5jb20iLCJleHAiOjE3NzgwODA0NDg0MjQsIm9wZXJhdG9yQ29kZSI6Ik9QMDAxIiwiaWF0IjoxNzc4MDc2ODQ4NDI0LCJqdGkiOiJhZjcyMzhlNC0yYWQwLTRkNDQtYWRjMi1jZTI2ZDA2MzQ3OGEifQ.lVe7hjX2YL4lRVFxLAauLkeVAGQIKFVhz9NLmXv1MQ4","refreshToken":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJPUDAwMSIsImlzcyI6ImFwaS52aW5wbGF5LmNvbSIsInR5cGUiOiJyZWZyZXNoIiwiZXhwIjoxNzgwNjY4ODQ4NDI0LCJpYXQiOjE3NzgwNzY4NDg0MjQsImp0aSI6IjlkYjNhMDY4LTdiYzAtNDc5My04NGQ4LTBiZGZjMGE4NzlhMSJ9.tkK02cedmrFbgtiR1sB049X8yjUxh0HU2TYjbLTLhqY","tokenType":"Bearer","expiresIn":3600,"scope":"game:read,game:write,balance:read,transfer:write"},"metadata":{"processingTime":1}}
+[PASS] 2. Refresh access token
+
+==============================
+3. Create account
+==============================
+API: POST https://s81.tevigames.com/api/v2/4011
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076844","currency":"VND","country":"VN","language":"vi"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076852187,"data":{"username":"curlv21778076844","accountId":"6548768","currency":"VND","balance":0,"createdAt":1778076852187,"status":"ACTIVE"},"metadata":{"processingTime":11}}
+[PASS] 3. Create account
+
+==============================
+4. Check initial balance
+==============================
+API: POST https://s81.tevigames.com/api/v2/4012
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076844"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076853699,"data":{"username":"curlv21778076844","accountId":"6548768","currency":"VND","balance":0,"availableBalance":0,"lockedBalance":0,"lastUpdated":1778076853699},"metadata":{"processingTime":4}}
+[PASS] 4. Check initial balance
+
+==============================
+5. Deposit
+==============================
+API: POST https://s81.tevigames.com/api/v2/4021
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076844","transactionId":"dep_curlv21778076844","type":"DEPOSIT","amount":10000,"currency":"VND","description":"Deposit from main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076857351,"data":{"transactionId":"dep_curlv21778076844","username":"curlv21778076844","type":"DEPOSIT","amount":10000,"currency":"VND","balanceBefore":0,"balanceAfter":10000,"status":"SUCCESS","processedAt":1778076857348},"metadata":{"requestId":"req_dep_curlv21778076844","processingTime":14}}
+[PASS] 5. Deposit
+
+==============================
+6. Deposit idempotency
+==============================
+API: POST https://s81.tevigames.com/api/v2/4021
+Request body:
+{"operatorCode":"OP001","username":"curlv21778076844","transactionId":"dep_curlv21778076844","type":"DEPOSIT","amount":10000,"currency":"VND","description":"Deposit from main wallet"}
+Response body:
+{"success":true,"errorCode":"0","errorMessage":"Success","timestamp":1778076858001,"data":{"transactionId":"dep_curlv21778076844","username":"curlv21778076844","type":"DEPOSIT","amount":10000,"currency":"VND","balanceBefore":10000,"balanceAfter":20000,"status":"SUCCESS","processedAt":1778076857999},"metadata":{"requestId":"req_dep_curlv21778076844","processingTime":10}}
+[PASS] 6. Deposit idempotency
+[FAIL] Deposit idempotency balanceAfter
+Expected: 10000
+Actual:   20000
