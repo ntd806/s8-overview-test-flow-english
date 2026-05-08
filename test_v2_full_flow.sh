@@ -11,6 +11,9 @@ INPUT_HOST="${HOST-}"
 INPUT_IP="${IP-}"
 INPUT_PORTAL_PORT="${PORTAL_PORT-}"
 INPUT_PORTAL_SCHEME="${PORTAL_SCHEME-}"
+INPUT_OP="${OP-}"
+INPUT_API_KEY="${API_KEY-}"
+INPUT_SECRET="${SECRET-}"
 
 ENV_FILE="${ENV_FILE:-.env}"
 if [ -f "$ENV_FILE" ]; then
@@ -25,9 +28,9 @@ PORTAL_PORT="${INPUT_PORTAL_PORT:-${PORTAL_PORT:-8081}}"
 PORTAL_SCHEME="${INPUT_PORTAL_SCHEME:-${PORTAL_SCHEME:-http}}"
 RAW_BASE="${INPUT_BASE:-${BASE:-${PORTAL_SCHEME}://${PORTAL_HOST}:${PORTAL_PORT}}}"
 
-OP="${OP:-OP001}"
-API_KEY="${API_KEY:-api_key_op001_live_prod2025}"
-SECRET="${SECRET:-test-secret-key-12345}"
+OP="${INPUT_OP:-${OP:-OP001}}"
+API_KEY="${INPUT_API_KEY:-${API_KEY:-api_key_op001_live_prod2025}}"
+SECRET="${INPUT_SECRET:-${SECRET:-test-secret-key-12345}}"
 CURRENCY="${CURRENCY:-VND}"
 COUNTRY="${COUNTRY:-VN}"
 LANGUAGE="${LANGUAGE:-vi}"
@@ -39,6 +42,7 @@ DEPOSIT_AMOUNT="${DEPOSIT_AMOUNT:-10000}"
 WITHDRAW_AMOUNT="${WITHDRAW_AMOUNT:-3000}"
 ASYNC_WAIT_SECONDS="${ASYNC_WAIT_SECONDS:-2}"
 LOG_DIR="${LOG_DIR:-./logs}"
+ALLOW_LEGACY_AUTH_FALLBACK="${ALLOW_LEGACY_AUTH_FALLBACK:-0}"
 
 USER="curlv2$(date +%s)"
 DEPOSIT_TXN="dep_${USER}"
@@ -321,15 +325,6 @@ if is_local_legacy_host "$PORTAL_HOST"; then
   IS_LOCAL_LEGACY_HOST=1
 fi
 
-if [ "$IS_LOCAL_LEGACY_HOST" -eq 1 ]; then
-  if [ "$OP" != "$LEGACY_OP" ] || [ "$API_KEY" != "$LEGACY_API_KEY" ] || [ "$SECRET" != "$LEGACY_SECRET" ]; then
-    log_warning "HOST=${PORTAL_HOST} uses a divergent legacy v2 profile. Overriding provided credentials with legacy43 defaults."
-  fi
-  OP="$LEGACY_OP"
-  API_KEY="$LEGACY_API_KEY"
-  SECRET="$LEGACY_SECRET"
-fi
-
 if [ "$WITHDRAW_AMOUNT" -gt "$DEPOSIT_AMOUNT" ]; then
   echo "WITHDRAW_AMOUNT must be <= DEPOSIT_AMOUNT"
   exit 1
@@ -373,9 +368,9 @@ authenticate_once "$OP" "$API_KEY" "$SECRET"
 AUTH_ERROR_CODE="$(json_get_string "$TOKEN_JSON" "errorCode")"
 AUTH_ERROR_MESSAGE="$(json_get_string "$TOKEN_JSON" "errorMessage")"
 
-if [ "$IS_LOCAL_LEGACY_HOST" -eq 1 ] && [ "$AUTH_ERROR_CODE" = "1001" ] && \
+if [ "$ALLOW_LEGACY_AUTH_FALLBACK" = "1" ] && [ "$IS_LOCAL_LEGACY_HOST" -eq 1 ] && [ "$AUTH_ERROR_CODE" = "1001" ] && \
    { [ "$OP" != "$LEGACY_OP" ] || [ "$API_KEY" != "$LEGACY_API_KEY" ] || [ "$SECRET" != "$LEGACY_SECRET" ]; }; then
-  log_warning "Official credentials failed with 1001 on HOST=${PORTAL_HOST}; retrying with legacy43 credentials."
+  log_warning "Configured credentials failed with 1001 on HOST=${PORTAL_HOST}; retrying with legacy43 credentials because ALLOW_LEGACY_AUTH_FALLBACK=1."
   OP="$LEGACY_OP"
   API_KEY="$LEGACY_API_KEY"
   SECRET="$LEGACY_SECRET"
