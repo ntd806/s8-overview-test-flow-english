@@ -8,8 +8,9 @@ $ENV_FILE = ".env"
 
 if (Test-Path $ENV_FILE) {
     Get-Content $ENV_FILE | ForEach-Object {
-        if ($_ -match "=") {
-            $key, $value = $_ -split "=", 2
+        $line = $_.Trim()
+        if ($line -and -not $line.StartsWith("#") -and $line -match "=") {
+            $key, $value = $line -split "=", 2
             [Environment]::SetEnvironmentVariable($key.Trim(), $value.Trim(), "Process")
         }
     }
@@ -25,9 +26,9 @@ $BASE = if ($env:BASE) {
     "${PORTAL_SCHEME}://${PORTAL_HOST}:${PORTAL_PORT}"
 }
 
-$OP       = if ($env:OP) { $env:OP } else { "default" }
-$API_KEY  = if ($env:API_KEY) { $env:API_KEY } else { "default_secret_key" }
-$SECRET   = if ($env:SECRET) { $env:SECRET } else { "default_secret_key" }
+$OP       = if ($env:OP) { $env:OP } else { "OP001" }
+$API_KEY  = if ($env:API_KEY) { $env:API_KEY } else { "api_key_op001_live_prod2025" }
+$SECRET   = if ($env:SECRET) { $env:SECRET } else { "test-secret-key-12345" }
 $CURRENCY = if ($env:CURRENCY) { $env:CURRENCY } else { "VND" }
 $GAME_ID  = if ($env:GAME_ID) { $env:GAME_ID } else { "bacay" }
 
